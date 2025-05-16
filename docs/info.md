@@ -23,4 +23,4 @@ you should receive a 'POLO! :D\n\r' on UART TX
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+probably a USB to TTL dongle like CP2102
