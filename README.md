@@ -42,5 +42,5 @@ The GitHub action will automatically build the ASIC files using [OpenLane](https
 
 ## Javi's documentation:
 I did not code anything with verilog since 9yrs ago in university and they were boring 8segment displays and LED+switches multiplexers/logic      
-So i started watching videos such as:
+So i started watching videos such as: 
   - https://www.youtube.com/watch?v=L1D5rBwGTwY&ab_channel=FPGADiscovery%28LearningHowtoWorkwithFPGAs%29
