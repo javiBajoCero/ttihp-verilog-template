@@ -9,11 +9,17 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+Listens to ascii 'MARCO\n' and once detected, it replies with 'POLO! :D\n\r'
 
 ## How to test
 
-Explain how to use your project
+Connect with default putty serial settings 115200bauds 
+8 data bits 
+1 stop bit 
+parity NONE 
+
+and type uppercase 'MARCO'+ press enter (which sends an extra '\n') trough UART RX
+you should receive a 'POLO! :D\n\r' on UART TX
 
 ## External hardware
 
