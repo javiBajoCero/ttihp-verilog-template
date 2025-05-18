@@ -1,5 +1,16 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
+## Javi's documentation:
+I have not build anything with verilog since 9yrs ago in university and they were boring 8segment displays and LED+switches multiplexers/logic      
+
+So i started watching videos such as: 
+  - https://www.youtube.com/watch?v=L1D5rBwGTwY&ab_channel=FPGADiscovery%28LearningHowtoWorkwithFPGAs%29
+
+And other verified projects such as:
+  - https://tinytapeout.com/runs/tt05/tt_um_uwuifier
+
+
+
 # Tiny Tapeout Verilog Project Template
 
 - [Read the documentation for project](docs/info.md)
@@ -40,7 +51,3 @@ The GitHub action will automatically build the ASIC files using [OpenLane](https
   - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
   - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
 
-## Javi's documentation:
-I did not code anything with verilog since 9yrs ago in university and they were boring 8segment displays and LED+switches multiplexers/logic      
-So i started watching videos such as: 
-  - https://www.youtube.com/watch?v=L1D5rBwGTwY&ab_channel=FPGADiscovery%28LearningHowtoWorkwithFPGAs%29
