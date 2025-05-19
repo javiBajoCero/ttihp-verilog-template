@@ -17,11 +17,13 @@ module tt_um_javibajocero_top (
 );
 
   // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = 0;
+  assign uo_out[7:1] = 0;
   assign uio_out = 0;
-  assign uio_oe  = 0;
+  assign uio_oe[7:1]  = 0;
 
   wire baud_tick;
+  assign uio_oe[0] = 1;           //enable debug clock pin
+  assign uo_out[0] = baud_tick;   //assign debug clock pin
 
   baud_generator baud_gen (
       .clk(clk),

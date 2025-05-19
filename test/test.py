@@ -7,7 +7,7 @@ from cocotb.triggers import ClockCycles, RisingEdge
 
 
 @cocotb.test()
-async def test_baud_generator(dut):
+async def test_tt_um_javibajocero_top(dut):
     dut._log.info("Start test_baud_generator")
 
     # Start 50 MHz clock (20 ns period)
@@ -20,18 +20,20 @@ async def test_baud_generator(dut):
     await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
 
-    dut._log.info("Waiting for baud_tick...")
+    dut._log.info("Waiting for baud_tick on uo_out[0]...")
 
-    # Count how many clock cycles until we get a baud_tick
     counter = 0
+    prev = dut.uo_out.value[0].integer  # Read the LSB
+
     while True:
         await RisingEdge(dut.clk)
         counter += 1
-        if dut.baud_gen.baud_tick.value == 1:
+        curr = dut.uo_out.value[0].integer
+        if prev == 0 and curr == 1:
             break
+        prev = curr
 
     dut._log.info(f"baud_tick occurred after {counter} clock cycles")
-    
-    # Assert that it happens around the right number of cycles
-    # For 9600 baud from 50MHz clock, should be about 5208 cycles
+
+    # For 9600 baud with 50 MHz clock, expect around 5208 cycles
     assert 5190 <= counter <= 5220, "baud_tick did not occur at expected interval"
