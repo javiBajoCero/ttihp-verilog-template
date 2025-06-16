@@ -54,18 +54,17 @@ module tt_um_javibajocero_top (
         .baud_tick(baud_tick_tx)
     );
 
-    // --- Intermediate sum wire ---
-    wire [7:0] sum = ui_in + uio_in;
+    // --- Connect inputs ---
+    assign ui_in[0] = tx_data;
 
     // --- Connect outputs ---
     assign uo_out[0] = baud_tick_rx;
-    assign uo_out[1] = tx_ready;
-    assign uo_out[7:2] = sum[6:1];  // Slight adjustment to keep sum info, if needed
-    
-    assign uio_out[0]    = tx_serial;                   // TX signal on uio_out[0]
-    assign uio_out[7:1]  = 7'b0;
-    assign uio_oe[0]     = 1'b1;
-    assign uio_oe[7:1]   = 7'b0;
+    assign uo_out[1] = baud_tick_tx;
+    assign uo_out[2] = tx_ready;
+    assign uo_out[3] = tx_serial; //UART serial output
+
+    // --- Connect bidi ---
+    assign uio_oe[7:0]   = 8'b0; //all inputs
 
     // Prevent unused warnings
     wire _unused = &{ena, 1'b0};
