@@ -19,7 +19,9 @@ module tt_um_javibajocero_top (
     // --- Instantiate the baud generator ---
     wire baud_tick;
 
-    baud_generator (
+    baud_generator #(
+        .BAUD_DIV(651)
+    ) baud_gen_inst (
         .clk(clk),
         .rst_n(rst_n),
         .baud_tick(baud_tick)
