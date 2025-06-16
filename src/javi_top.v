@@ -25,7 +25,6 @@ module tt_um_javibajocero_top (
 
     // Static transmit for testing (tx_valid high one cycle, tx_data = 'A')
     wire       tx_valid = 1'b0;       // Placeholder: replace with actual logic or testbench
-    wire [7:0] tx_data  = 8'h00;      // Placeholder: 'A' = 8'h41 for real TX test
 
     // TX baud generator (9600 baud)
     baud_generator #(
