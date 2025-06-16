@@ -44,7 +44,7 @@ async def test_project(dut):
 
 @cocotb.test()
 async def test_baud_tick(dut):
-    dut._log.info("Test that baud_tick (uo_out[0]) toggles periodically at 76800 baud")
+    dut._log.info(f"Simulating with BAUD_DIV = 651 (expected tick every 13 us at 50 MHz)")
 
     # Correct clock for @ 50 MHz
     cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())

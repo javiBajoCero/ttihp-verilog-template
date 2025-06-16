@@ -27,7 +27,7 @@ module baud_generator(
     );
     parameter BAUD_DIV = 651;  //(50_000_000) / (9600 * 8) oversampling factor of 8
 
-    reg [12:0] counter;  // Enough bits to hold values up to 5208
+    reg [12:0] counter;  // Enough bits to hold values up to 651
     
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
