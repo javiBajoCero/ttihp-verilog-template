@@ -3,7 +3,7 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles, RisingEdge
+from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge
 
 
 @cocotb.test()
@@ -74,3 +74,56 @@ async def test_baud_tick(dut):
         prev = tick
 
     assert baud_tick_count >= 10, f"Expected 10 baud ticks, got {baud_tick_count}"
+
+@cocotb.test()
+async def test_uart_tx(dut):
+    dut._log.info(f"Send a byte and verify tx_serial waveform using baud_tick (via uio_out[0])")
+    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50 MHz
+
+    # Reset
+    dut.rst_n.value = 0
+    dut.tx_valid.value = 0
+    dut.tx_data.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+
+    # Prepare data
+    byte_to_send = 0x41  # 'A' = 0b01000001
+    expected_bits = [0]                          # start bit
+    expected_bits += [int(b) for b in f"{byte_to_send:08b}"[::-1]]  # data bits LSB first
+    expected_bits += [1]                         # stop bit
+
+    dut._log.info(f"Sending byte: 0x{byte_to_send:02X} ({chr(byte_to_send)})")
+    dut.tx_data.value = byte_to_send
+
+    # Wait until tx_ready is high
+    while not dut.tx_ready.value:
+        await RisingEdge(dut.clk)
+
+    # Trigger transmit
+    dut.tx_valid.value = 1
+    await RisingEdge(dut.clk)
+    dut.tx_valid.value = 0
+
+    # Wait for first baud_tick
+    while True:
+        await RisingEdge(dut.clk)
+        if dut.baud_tick.value:
+            break
+
+    # Capture serial output over each tick
+    captured_bits = []
+
+    for i in range(len(expected_bits)):
+        # Wait for baud_tick
+        while True:
+            await RisingEdge(dut.clk)
+            if dut.baud_tick.value:
+                break
+
+        # Read tx_serial from uio_out[0]
+        serial_bit = int(dut.uio_out[0].value)
+        captured_bits.append(serial_bit)
+        dut._log.info(f"Bit {i}: {serial_bit}")
+
+    assert captured_bits == expected_bits, f"Expected {expected_bits}, got {captured_bits}"
