@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 /*
  * Copyright (c) 2024 Your Name
  * SPDX-License-Identifier: Apache-2.0
@@ -55,7 +56,7 @@ module tt_um_javibajocero_top (
     );
 
     // --- Connect inputs ---
-    assign ui_in = tx_data;
+    wire [7:0] tx_data = ui_in;
 
     // --- Connect outputs ---
     assign uo_out[0] = baud_tick_rx;
