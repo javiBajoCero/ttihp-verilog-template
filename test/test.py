@@ -64,13 +64,13 @@ async def test_baud_tick(dut):
     max_cycles = 10_000  # Timeout after 10k cycles to avoid infinite loop
 
     for i in range(max_cycles):
-            await RisingEdge(dut.clk)
-            tick = dut.uo_out.value.integer & 0x01
-            if tick and not prev:
-                baud_tick_count += 1
-                dut._log.info(f"Tick {baud_tick_count} seen at cycle {i}")
-                if baud_tick_count >= 10:
-                    break
-            prev = tick
+        await RisingEdge(dut.clk)
+        tick = dut.uo_out.value.integer & 0x01
+        if tick and not prev:
+            baud_tick_count += 1
+            dut._log.info(f"Tick {baud_tick_count} seen at cycle {i}")
+            if baud_tick_count >= 10:
+                break
+        prev = tick
 
-        assert baud_tick_count >= 10, f"Expected 10 baud ticks, got {baud_tick_count}"
+    assert baud_tick_count >= 10, f"Expected 10 baud ticks, got {baud_tick_count}"
