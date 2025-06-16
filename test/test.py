@@ -43,26 +43,24 @@ async def test_project(dut):
 @cocotb.test()
 async def test_baud_tick(dut):
     """Test that baud_tick (uo_out[0]) toggles periodically"""
-    clock = Clock(dut.clk, 20, units="ns")  # 50 MHz
-    cocotb.start_soon(clock.start())
 
-    # Apply reset
+    # Correct clock for BAUD_DIV=5208 @ 50 MHz
+    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())
+
+    # Reset
     dut.ena.value = 1
+    dut.rst_n.value = 0
     dut.ui_in.value = 0
     dut.uio_in.value = 0
-
-    dut.rst_n.value = 0
     await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
     dut._log.info("Reset released")
 
-    await ClockCycles(dut.clk, 100)  # allow time for DUT to stabilize
-
-    # Watch uo_out[0] (baud_tick)
+    # Observe uo_out[0]
     baud_tick_count = 0
     prev = 0
 
-    for _ in range(2000):
+    for _ in range(10000):  # 10k clocks @ 50 MHz = 200 us
         await RisingEdge(dut.clk)
         tick = dut.uo_out.value.integer & 0x01
         if tick and not prev:
