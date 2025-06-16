@@ -55,7 +55,7 @@ module tt_um_javibajocero_top (
     );
 
     // --- Connect inputs ---
-    assign ui_in[0] = tx_data;
+    assign ui_in = tx_data;
 
     // --- Connect outputs ---
     assign uo_out[0] = baud_tick_rx;
