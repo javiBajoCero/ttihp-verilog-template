@@ -26,17 +26,18 @@ module tt_um_javibajocero_top (
         .rst_n(rst_n),
         .baud_tick(baud_tick)
     );
-
-    uart_tx uart_tx_inst (
-        .clk(clk),
-        .rst_n(rst_n),
-        .tx_valid(tx_valid),
-        .tx_data(tx_data),
-        .tx_ready(tx_ready),
-        .tx_serial(tx_serial),
-        .baud_tick(baud_tick)
-    );
-
+    
+/*
+ *   uart_tx uart_tx_inst (
+ *      .clk(clk),
+ *       .rst_n(rst_n),
+ *       .tx_valid(tx_valid),
+ *       .tx_data(tx_data),
+ *       .tx_ready(tx_ready),
+ *       .tx_serial(tx_serial),
+ *       .baud_tick(baud_tick)
+ *   );
+ */
     // --- Intermediate sum wire ---
     wire [7:0] sum = ui_in + uio_in;
 
