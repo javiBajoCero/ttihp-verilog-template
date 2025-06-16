@@ -44,7 +44,7 @@ async def test_project(dut):
 
 @cocotb.test()
 async def test_baud_tick(dut):
-    """Test that baud_tick (uo_out[0]) toggles periodically"""
+     """Test that baud_tick (uo_out[0]) toggles periodically at 76800 baud"""
 
     # Correct clock for BAUD_DIV=5208 @ 50 MHz
     cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())
@@ -61,13 +61,16 @@ async def test_baud_tick(dut):
     # Observe uo_out[0]
     baud_tick_count = 0
     prev = 0
+    max_cycles = 10_000  # Timeout after 10k cycles to avoid infinite loop
 
-    for _ in range(10000):  # 10k clocks @ 50 MHz = 200 us
+   for i in range(max_cycles):
         await RisingEdge(dut.clk)
         tick = dut.uo_out.value.integer & 0x01
         if tick and not prev:
             baud_tick_count += 1
+            dut._log.info(f"Tick {baud_tick_count} seen at cycle {i}")
+            if baud_tick_count >= 10:
+                break
         prev = tick
 
-    dut._log.info(f"Baud tick pulses seen: {baud_tick_count}")
-    assert baud_tick_count > 0, "Expected at least one baud tick"
+    assert baud_tick_count >= 10, f"Expected 10 baud ticks, got {baud_tick_count}"
