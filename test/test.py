@@ -3,7 +3,7 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import ClockCycles, RisingEdge
 
 
 @cocotb.test()
@@ -38,3 +38,32 @@ async def test_project(dut):
 
     # Keep testing the module by changing the input values, waiting for
     # one or more clock cycles, and asserting the expected output values.
+
+
+@cocotb.test()
+async def test_baud_tick(dut):
+    """Test that baud_tick (uo_out[0]) toggles periodically"""
+    clock = Clock(dut.clk, 83.33, units="ns")  # 12 MHz
+    cocotb.start_soon(clock.start())
+
+    # Apply reset
+    dut.ena.value = 1
+    dut.ui_in.value = 0
+    dut.uio_in.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+
+    # Watch uo_out[0] (baud_tick)
+    baud_tick_count = 0
+    prev = 0
+
+    for _ in range(2000):
+        await RisingEdge(dut.clk)
+        tick = dut.uo_out.value.integer & 0x01
+        if tick and not prev:
+            baud_tick_count += 1
+        prev = tick
+
+    dut._log.info(f"Baud tick pulses seen: {baud_tick_count}")
+    assert baud_tick_count > 0, "Expected at least one baud tick"

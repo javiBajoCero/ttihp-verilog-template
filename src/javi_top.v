@@ -16,12 +16,25 @@ module tt_um_javibajocero_top (
     input  wire       rst_n     // reset_n - low to reset
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+    // --- Instantiate the baud generator ---
+    wire baud_tick;
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+    baud_generator #(
+        .BAUD_DIV(1250)
+    ) baud_gen_inst (
+        .clk(clk),
+        .rst_n(rst_n),
+        .baud_tick(baud_tick)
+    );
+    
+    // --- Connect outputs ---
+    // Show sum of ui_in and uio_in on bits [7:1]
+    // Show baud_tick on bit [0]
+    assign uo_out  = { (ui_in + uio_in)[6:0], baud_tick };
+    assign uio_out = 8'b0;
+    assign uio_oe  = 8'b0;
+
+    // Prevent unused warnings (now clk and rst_n are used)
+    wire _unused = &{ena, 1'b0};
 
 endmodule
