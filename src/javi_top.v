@@ -20,17 +20,19 @@ module tt_um_javibajocero_top (
     wire baud_tick;
 
     baud_generator #(
-        .BAUD_DIV(1250)
+        .BAUD_DIV(5208)
     ) baud_gen_inst (
         .clk(clk),
         .rst_n(rst_n),
         .baud_tick(baud_tick)
     );
-    
+
+    // --- Intermediate sum wire ---
+    wire [7:0] sum = ui_in + uio_in;
+
     // --- Connect outputs ---
-    // Show sum of ui_in and uio_in on bits [7:1]
-    // Show baud_tick on bit [0]
-    assign uo_out  = { (ui_in + uio_in)[6:0], baud_tick };
+    // Show sum[6:0] on bits [7:1], baud_tick on bit [0]
+    assign uo_out  = { sum[6:0], baud_tick };
     assign uio_out = 8'b0;
     assign uio_oe  = 8'b0;
 
