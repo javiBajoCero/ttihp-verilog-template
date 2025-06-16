@@ -16,20 +16,32 @@ module tt_um_javibajocero_top (
     input  wire       rst_n     // reset_n - low to reset
 );
 
- // --- Internal signals ---
+    // --- Internal signals ---
     wire tx_serial;
     wire tx_ready;
-    wire tx_valid = 0;  // placeholder
-    wire [7:0] tx_data = 8'h00;  // placeholder
-    // --- Instantiate the baud generator ---
-    wire baud_tick;
+    wire baud_tick_tx;
+    wire baud_tick_rx;
 
+    // Static transmit for testing (tx_valid high one cycle, tx_data = 'A')
+    wire       tx_valid = 1'b0;       // Placeholder: replace with actual logic or testbench
+    wire [7:0] tx_data  = 8'h00;      // Placeholder: 'A' = 8'h41 for real TX test
+
+    // TX baud generator (9600 baud)
     baud_generator #(
-        .BAUD_DIV(651)
-    ) baud_gen_inst (
+        .BAUD_DIV(5208)//50000000/9600
+    ) baud_gen_tx (
         .clk(clk),
         .rst_n(rst_n),
-        .baud_tick(baud_tick)
+        .baud_tick(baud_tick_tx)
+    );
+
+    // RX baud generator (oversampled 8x)
+    baud_generator #(
+        .BAUD_DIV(651)//50000000/9600*8
+    ) baud_gen_rx (
+        .clk(clk),
+        .rst_n(rst_n),
+        .baud_tick(baud_tick_rx)
     );
 
     uart_tx uart_tx_inst (
@@ -39,21 +51,20 @@ module tt_um_javibajocero_top (
         .tx_data(tx_data),
         .tx_ready(tx_ready),
         .tx_serial(tx_serial),
-        .baud_tick(baud_tick)
+        .baud_tick(baud_tick_tx)
     );
 
     // --- Intermediate sum wire ---
     wire [7:0] sum = ui_in + uio_in;
 
     // --- Connect outputs ---
-    assign uo_out     = { sum[6:0], baud_tick };  // still showing sum + tick
-    assign uio_out[0] = tx_serial;                // expose UART TX on uio_out[0]
-    assign uio_out[7:1] = 0;
+    assign uo_out        = { sum[6:0], baud_tick_rx };  // Use RX tick on uo_out[0]
+    assign uio_out[0]    = tx_serial;                   // TX signal on uio_out[0]
+    assign uio_out[7:1]  = 7'b0;
+    assign uio_oe[0]     = 1'b1;
+    assign uio_oe[7:1]   = 7'b0;
 
-    assign uio_oe[0]  = 1;                        // actively drive uio_out[0]
-    assign uio_oe[7:1] = 0;
-
-    // Prevent unused warnings (now clk and rst_n are used)
+    // Prevent unused warnings
     wire _unused = &{ena, 1'b0};
 
 endmodule
