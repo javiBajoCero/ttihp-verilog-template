@@ -58,7 +58,10 @@ module tt_um_javibajocero_top (
     wire [7:0] sum = ui_in + uio_in;
 
     // --- Connect outputs ---
-    assign uo_out        = { sum[6:0], baud_tick_rx };  // Use RX tick on uo_out[0]
+    assign uo_out[0] = baud_tick_rx;
+    assign uo_out[1] = tx_ready;
+    assign uo_out[7:2] = sum[6:1];  // Slight adjustment to keep sum info, if needed
+    
     assign uio_out[0]    = tx_serial;                   // TX signal on uio_out[0]
     assign uio_out[7:1]  = 7'b0;
     assign uio_oe[0]     = 1'b1;
