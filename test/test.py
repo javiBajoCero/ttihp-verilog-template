@@ -74,7 +74,7 @@ async def test_baud_tick_tx(dut):
 
 @cocotb.test()
 async def test_uart_tx(dut):
-    """Send a UART byte (bit by bit via ui_in[0]) and verify tx_serial on uo_out[3]"""
+    """Send a UART byte (via ui_in) and verify tx_serial on uo_out[3]"""
 
     cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50 MHz
 
@@ -89,7 +89,7 @@ async def test_uart_tx(dut):
     # UART data to transmit
     byte_to_send = 0x41  # 'A'
     bits_to_send = [int(b) for b in f"{byte_to_send:08b}"[::-1]]  # LSB first
-    full_frame = [0] + bits_to_send + [1]  # Start + data + stop bits
+    dut.ui_in=bits_to_send;
 
     dut._log.info(f"Sending UART frame: {full_frame}")
 
@@ -97,24 +97,10 @@ async def test_uart_tx(dut):
     while not int(dut.uo_out.value[2]):
         await RisingEdge(dut.clk)
 
-    # Drive tx_data via ui_in[0], pulse tx_valid on ui_in[1]
-    for i, bit in enumerate(full_frame):
-        dut.ui_in.value = (bit & 0x01) | (1 << 1)  # ui_in[0] = tx_data, ui_in[1] = tx_valid = 1
-        await RisingEdge(dut.clk)
-        dut.ui_in.value = (bit & 0x01)  # deassert tx_valid
-        dut._log.info(f"Sent bit {i}: {bit}")
-
-        # Wait for baud_tick_tx (uo_out[1])
-        while not (int(dut.uo_out.value[1])):
-            await RisingEdge(dut.clk)
-
-        # Wait one more clock to ensure bit was latched
-        await RisingEdge(dut.clk)
-
     # Capture bits from tx_serial (uo_out[3]) on each baud tick
     received = []
 
-    for i in range(len(full_frame)):
+    for i in range(len([0]+ full_frame + [1]))://start + frame + stop
         # Wait for baud_tick_tx
         while not int(dut.uo_out.value[1]):
             await RisingEdge(dut.clk)
@@ -123,4 +109,4 @@ async def test_uart_tx(dut):
         received.append(bit)
         dut._log.info(f"Captured bit {i}: {bit}")
 
-    assert received == full_frame, f"Expected {full_frame}, got {received}"
+    assert received == [0]+ full_frame + [1], f"Expected {[0]+ full_frame + [1]}, got {received}"
