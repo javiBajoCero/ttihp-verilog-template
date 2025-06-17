@@ -89,7 +89,7 @@ async def test_uart_tx(dut):
     # UART data to transmit
     byte_to_send = 0x41  # 'A'
     bits_to_send = [int(b) for b in f"{byte_to_send:08b}"[::-1]]  # LSB first
-    dut.ui_in=bits_to_send;
+    dut.ui_in.value = sum((bit << i) for i, bit in enumerate(bits_to_send))#packing them again?
 
     dut._log.info(f"Sending UART frame: {full_frame}")
 
