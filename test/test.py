@@ -93,6 +93,8 @@ async def test_uart_tx(dut):
 
     dut._log.info(f"Sending UART frame: {bits_to_send}")
 
+    # set tx_valid = 1 (uio_in[0])
+    dut.uio_in[0]=1;
     # Wait for tx_ready = 1 (uo_out[2])
     while not int(dut.uo_out.value[2]):
         await RisingEdge(dut.clk)
