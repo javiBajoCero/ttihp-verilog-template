@@ -62,6 +62,10 @@ module tt_um_javibajocero_top (
     assign uo_out[1] = baud_tick_tx;
     assign uo_out[2] = tx_ready;
     assign uo_out[3] = tx_serial; //UART serial output
+    assign uo_out[4] = 1;   //not used
+    assign uo_out[5] = 1;   //not used  
+    assign uo_out[6] = 1;   //not used
+    assign uo_out[7] = 1;   //not used
 
     // --- Connect bidi ---
     assign uio_oe[7:0]   = 8'b0; //all inputs
