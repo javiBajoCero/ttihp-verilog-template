@@ -23,9 +23,6 @@ module tt_um_javibajocero_top (
     wire baud_tick_tx;
     wire baud_tick_rx;
 
-    // Static transmit for testing (tx_valid high one cycle, tx_data = 'A')
-    wire       tx_valid = 1'b0;       // Placeholder: replace with actual logic or testbench
-
     // TX baud generator (9600 baud)
     baud_generator #(
         .BAUD_DIV(5208)//50000000/9600
@@ -56,7 +53,8 @@ module tt_um_javibajocero_top (
 
     // --- Connect inputs ---
     wire [7:0] tx_data = ui_in;
-
+    wire tx_valid = uio_in[0];
+    
     // --- Connect outputs ---
     assign uo_out[0] = baud_tick_rx;
     assign uo_out[1] = baud_tick_tx;
