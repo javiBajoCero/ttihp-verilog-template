@@ -99,8 +99,8 @@ async def test_uart_tx(dut):
 
     # Capture bits from tx_serial (uo_out[3]) on each baud tick
     received = []
-
-    for i in range(len([0]+ full_frame + [1]))://start + frame + stop
+    full_framestartstop=[0]+ full_frame + [1]
+    for i in range(len(full_framestartstop)):#start + frame + stop
         # Wait for baud_tick_tx
         while not int(dut.uo_out.value[1]):
             await RisingEdge(dut.clk)
@@ -109,4 +109,4 @@ async def test_uart_tx(dut):
         received.append(bit)
         dut._log.info(f"Captured bit {i}: {bit}")
 
-    assert received == [0]+ full_frame + [1], f"Expected {[0]+ full_frame + [1]}, got {received}"
+    assert received == full_framestartstop, f"Expected {full_framestartstop}, got {received}"
