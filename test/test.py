@@ -89,9 +89,9 @@ async def test_uart_tx(dut):
     # UART data to transmit
     byte_to_send = 0x41  # 'A'
     bits_to_send = [int(b) for b in f"{byte_to_send:08b}"[::-1]]  # LSB first
-    dut.ui_in.value = sum((bit << i) for i, bit in enumerate(bits_to_send))#packing them again?
+    dut.ui_in.value = byte_to_send
 
-    dut._log.info(f"Sending UART frame: {full_frame}")
+    dut._log.info(f"Sending UART frame: {bits_to_send}")
 
     # Wait for tx_ready = 1 (uo_out[2])
     while not int(dut.uo_out.value[2]):
@@ -99,7 +99,7 @@ async def test_uart_tx(dut):
 
     # Capture bits from tx_serial (uo_out[3]) on each baud tick
     received = []
-    full_framestartstop=[0]+ full_frame + [1]
+    full_framestartstop=[0]+ bits_to_send + [1]
     for i in range(len(full_framestartstop)):#start + frame + stop
         # Wait for baud_tick_tx
         while not int(dut.uo_out.value[1]):
