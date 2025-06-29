@@ -96,8 +96,7 @@ async def test_uart_tx(dut):
 
     # Trigger transmission by setting ui_in[0] = 1
     dut.ui_in.value = 0b00000001
-    while dut.uo_out.value[4] == 0:  # wait for tx_busy
-        await RisingEdge(dut.clk)
+    await ClockCycles(dut.clk, 10)  # Hold send high for 10 cycles
     dut.ui_in.value = 0
 
     # Expected bytes: 'P', 'O', 'L', 'O', '\n'
@@ -120,7 +119,7 @@ async def test_uart_tx(dut):
         tx_bit = int(dut.uo_out.value[3])  # tx_serial
         received_bits.append(tx_bit)
         dut._log.info(f"Bit {i}: {tx_bit}")
-        
+
     # ✅ Assert the first bit is start bit (0)
     assert received_bits[0] == 0, "UART start bit not detected!"
 
