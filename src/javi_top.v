@@ -38,7 +38,7 @@ module tt_um_javibajocero_top (
         .baud_tick(baud_tick_rx),
         .rx(uio_in[0]),     // RX from pin
         .data(rx_data),
-        .data_valid(rx_valid)
+        .byte_received(rx_valid)
     );
 
     // --- Buffer Comparator (detect "MARCO") ---
@@ -47,8 +47,8 @@ module tt_um_javibajocero_top (
     buffer_comparator comp (
         .clk(clk),
         .rst_n(rst_n),
-        .data_valid(rx_valid),
-        .data(rx_data),
+        .new_byte(rx_valid),
+        .the_byte(rx_data),
         .match(trigger_send)
     );
 
