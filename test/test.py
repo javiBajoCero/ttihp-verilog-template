@@ -110,13 +110,19 @@ async def test_uart_tx(dut):
 
     for i, expected in enumerate(expected_bits):
         # Wait for a rising edge of baud_tick_tx (uo_out[1])
+        await RisingEdge(dut.clk)
         while dut.uo_out.value[1] == 0:
             await RisingEdge(dut.clk)
-        await RisingEdge(dut.clk)  # Align with baud tick
+        await ClockCycles(dut.clk, 1)
+        bit = int(dut.uo_out.value[3])
+
 
         tx_bit = int(dut.uo_out.value[3])  # tx_serial
         received_bits.append(tx_bit)
         dut._log.info(f"Bit {i}: {tx_bit}")
+        
+    # ✅ Assert the first bit is start bit (0)
+    assert received_bits[0] == 0, "UART start bit not detected!"
 
     # Reconstruct bytes and compare
     def decode_uart(bits):
