@@ -44,6 +44,7 @@ module tt_um_javibajocero_top (
 
     uart_tx uart_tx_inst (
         .clk(clk),
+        .rst_n(rst_n),
         .baud_tick(baud_tick_tx),
         .send(tx_send),
         .tx(tx_serial),
