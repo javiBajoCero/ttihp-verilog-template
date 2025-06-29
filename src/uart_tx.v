@@ -22,7 +22,6 @@ module uart_tx (
 
     state_t state;
 
-    reg [7:0] message [0:4];      // "POLO\n"
     reg [2:0] bit_index;
     reg [2:0] byte_index;
     reg [7:0] shift_reg;
@@ -32,22 +31,26 @@ module uart_tx (
     assign tx = tx_reg;
     assign busy = sending;
 
+    // ROM-like function to return byte from "POLO\n"
+    function automatic [7:0] get_message_byte(input [2:0] index);
+        case (index)
+            3'd0: get_message_byte = 8'h50; // 'P'
+            3'd1: get_message_byte = 8'h4F; // 'O'
+            3'd2: get_message_byte = 8'h4C; // 'L'
+            3'd3: get_message_byte = 8'h4F; // 'O'
+            3'd4: get_message_byte = 8'h0A; // '\n'
+            default: get_message_byte = 8'h00;
+        endcase
+    endfunction
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            // Async reset
             state       <= IDLE;
             bit_index   <= 0;
             byte_index  <= 0;
             shift_reg   <= 8'h00;
             tx_reg      <= 1'b1;
             sending     <= 1'b0;
-
-            // Initialize message buffer
-            message[0] <= 8'h50; // 'P'
-            message[1] <= 8'h4F; // 'O'
-            message[2] <= 8'h4C; // 'L'
-            message[3] <= 8'h4F; // 'O'
-            message[4] <= 8'h0A; // '\n'
         end else begin
             case (state)
                 IDLE: begin
@@ -62,8 +65,8 @@ module uart_tx (
 
                 START_BIT: begin
                     if (baud_tick) begin
-                        tx_reg <= 1'b0;                      // start bit
-                        shift_reg <= message[byte_index];   // load correct byte here!
+                        tx_reg <= 1'b0;  // start bit
+                        shift_reg <= get_message_byte(byte_index);
                         bit_index <= 0;
                         state <= DATA_BITS;
                     end
@@ -82,18 +85,17 @@ module uart_tx (
 
                 STOP_BIT: begin
                     if (baud_tick) begin
-                        tx_reg <= 1'b1; // Stop bit
+                        tx_reg <= 1'b1; // stop bit
                         state <= NEXT_BYTE;
                     end
                 end
 
                 NEXT_BYTE: begin
                     if (baud_tick) begin
-                        if (byte_index == 4) begin
+                        if (byte_index == 3'd4) begin
                             state <= DONE;
                         end else begin
                             byte_index <= byte_index + 1;
-                            shift_reg <= message[byte_index + 1];
                             state <= START_BIT;
                         end
                     end
