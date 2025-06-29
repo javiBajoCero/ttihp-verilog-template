@@ -72,43 +72,60 @@ async def test_baud_tick_tx(dut):
     assert baud_tick_count >= 10, f"Expected 10 TX baud ticks, got {baud_tick_count}"
     
 
+def uart_encode(byte):
+    """Returns UART frame as a list of bits: start + data (LSB first) + stop"""
+    bits = [0]  # Start bit
+    bits += [(byte >> i) & 1 for i in range(8)]  # Data bits (LSB first)
+    bits += [1]  # Stop bit
+    return bits
+
+
 @cocotb.test()
 async def test_uart_tx(dut):
-    """Send a UART byte (via ui_in) and verify tx_serial on uo_out[3]"""
+    """Test UART TX: check if 'POLO\\n' is transmitted correctly"""
 
-    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50 MHz
+    # Start 50MHz clock
+    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50MHz
 
     # Reset
     dut.rst_n.value = 0
     dut.ui_in.value = 0
-    dut.uio_in.value = 0
     await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
-    dut._log.info("Reset released")
+    dut._log.info("Reset done")
 
-    # UART data to transmit
-    byte_to_send = 0x41  # 'A'
-    bits_to_send = [int(b) for b in f"{byte_to_send:08b}"[::-1]]  # LSB first
-    dut.ui_in.value = byte_to_send
+    # Trigger transmission by setting ui_in[0] = 1
+    dut.ui_in.value = 0b00000001
+    await ClockCycles(dut.clk, 1)
+    dut.ui_in.value = 0  # Deassert send quickly (single pulse)
 
-    dut._log.info(f"Sending UART frame: {bits_to_send}")
+    # Expected bytes: 'P', 'O', 'L', 'O', '\n'
+    expected_bytes = [ord(c) for c in "POLO\n"]
+    expected_bits = []
+    for byte in expected_bytes:
+        expected_bits += uart_encode(byte)
 
-    # set tx_valid = 1 (uio_in[0])
-    dut.uio_in[0]=1;
-    # Wait for tx_ready = 1 (uo_out[2])
-    while not int(dut.uo_out.value[2]):
-        await RisingEdge(dut.clk)
+    received_bits = []
 
-    # Capture bits from tx_serial (uo_out[3]) on each baud tick
-    received = []
-    full_framestartstop=[0]+ bits_to_send + [1]
-    for i in range(len(full_framestartstop)):#start + frame + stop
-        # Wait for baud_tick_tx
-        while not int(dut.uo_out.value[1]):
+    for i, expected in enumerate(expected_bits):
+        # Wait for a rising edge of baud_tick_tx (uo_out[1])
+        while dut.uo_out.value[1] == 0:
             await RisingEdge(dut.clk)
-        await RisingEdge(dut.clk)
-        bit = int(dut.uo_out.value[3])
-        received.append(bit)
-        dut._log.info(f"Captured bit {i}: {bit}")
+        await RisingEdge(dut.clk)  # Align with baud tick
 
-    assert received == full_framestartstop, f"Expected {full_framestartstop}, got {received}"
+        tx_bit = int(dut.uo_out.value[3])  # tx_serial
+        received_bits.append(tx_bit)
+        dut._log.info(f"Bit {i}: {tx_bit}")
+
+    # Reconstruct bytes and compare
+    def decode_uart(bits):
+        return [
+            sum(bits[i + 1 + b] << b for b in range(8))
+            for i in range(0, len(bits), 10)
+        ]
+
+    received_bytes = decode_uart(received_bits)
+    dut._log.info(f"Received bytes: {[chr(b) for b in received_bytes]}")
+
+    assert received_bytes == expected_bytes, \
+        f"Expected {expected_bytes}, got {received_bytes}"

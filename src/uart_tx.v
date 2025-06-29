@@ -2,71 +2,99 @@
 `default_nettype none
 
 module uart_tx (
-    input  wire       clk,
-    input  wire       rst_n,
-    input  wire       tx_valid,
-    input  wire [7:0] tx_data,
-    output reg        tx_ready,
-    output reg        tx_serial,
-    input  wire       baud_tick  // <<< use your existing baud_generator output
+    input  wire clk,         // system clock
+    input  wire baud_tick,   // 9600 baud tick (1 cycle per bit)
+    input  wire send,        // trigger to start sending "POLO\n"
+    output wire tx,          // UART transmit line
+    output wire busy         // high when sending
 );
 
+    // State machine states
     typedef enum logic [2:0] {
-        IDLE    = 3'b000,
-        START   = 3'b001,
-        DATA    = 3'b010,
-        STOP    = 3'b011,
-        CLEANUP = 3'b100
+        IDLE,
+        START_BIT,
+        DATA_BITS,
+        STOP_BIT,
+        NEXT_BYTE,
+        DONE
     } state_t;
 
-    state_t state;
+    state_t state = IDLE;
 
-    reg [3:0] bit_index;
-    reg [7:0] shift_reg;
+    reg [7:0] message [0:4];      // "POLO\n"
+    reg [2:0] bit_index = 0;
+    reg [2:0] byte_index = 0;
+    reg [7:0] shift_reg = 8'h00;
+    reg tx_reg = 1'b1;
+    reg sending = 1'b0;
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            state      <= IDLE;
-            tx_serial  <= 1;  // idle = high
-            tx_ready   <= 1;
-            shift_reg  <= 0;
-            bit_index  <= 0;
-        end else if (baud_tick) begin  // <<< driven externally
-            case (state)
-                IDLE: begin
-                    tx_serial <= 1;
-                    if (tx_valid) begin
-                        shift_reg <= tx_data;
-                        bit_index <= 0;
-                        tx_ready  <= 0;
-                        state     <= START;
+    assign tx = tx_reg;
+    assign busy = sending;
+
+    initial begin
+        message[0] = 8'h50; // 'P'
+        message[1] = 8'h4F; // 'O'
+        message[2] = 8'h4C; // 'L'
+        message[3] = 8'h4F; // 'O'
+        message[4] = 8'h0A; // '\n'
+    end
+
+    always @(posedge clk) begin
+        case (state)
+            IDLE: begin
+                tx_reg <= 1'b1;
+                sending <= 1'b0;
+                if (send) begin
+                    byte_index <= 0;
+                    shift_reg <= message[0];
+                    state <= START_BIT;
+                    sending <= 1'b1;
+                end
+            end
+
+            START_BIT: begin
+                if (baud_tick) begin
+                    tx_reg <= 1'b0; // Start bit
+                    bit_index <= 0;
+                    state <= DATA_BITS;
+                end
+            end
+
+            DATA_BITS: begin
+                if (baud_tick) begin
+                    tx_reg <= shift_reg[0];
+                    shift_reg <= {1'b0, shift_reg[7:1]};
+                    if (bit_index == 7)
+                        state <= STOP_BIT;
+                    else
+                        bit_index <= bit_index + 1;
+                end
+            end
+
+            STOP_BIT: begin
+                if (baud_tick) begin
+                    tx_reg <= 1'b1; // Stop bit
+                    state <= NEXT_BYTE;
+                end
+            end
+
+            NEXT_BYTE: begin
+                if (baud_tick) begin
+                    if (byte_index == 4) begin
+                        state <= DONE;
+                    end else begin
+                        byte_index <= byte_index + 1;
+                        shift_reg <= message[byte_index + 1];
+                        state <= START_BIT;
                     end
                 end
+            end
 
-                START: begin
-                    tx_serial <= 0;  // Start bit
-                    state     <= DATA;
-                end
-
-                DATA: begin
-                    tx_serial <= shift_reg[0];
-                    shift_reg <= shift_reg >> 1;
-                    bit_index <= bit_index + 1;
-                    if (bit_index == 7)
-                        state <= STOP;
-                end
-
-                STOP: begin
-                    tx_serial <= 1;  // Stop bit
-                    state     <= CLEANUP;
-                end
-
-                CLEANUP: begin
-                    tx_ready <= 1;
-                    state    <= IDLE;
-                end
-            endcase
-        end
+            DONE: begin
+                sending <= 1'b0;
+                state <= IDLE;
+            end
+        endcase
     end
 
 endmodule

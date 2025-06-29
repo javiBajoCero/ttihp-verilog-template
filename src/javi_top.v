@@ -18,14 +18,15 @@ module tt_um_javibajocero_top (
 );
 
     // --- Internal signals ---
-    wire tx_serial;
-    wire tx_ready;
     wire baud_tick_tx;
     wire baud_tick_rx;
+    wire tx_serial;
+    wire tx_send;
+    wire tx_busy;
 
     // TX baud generator (9600 baud)
     baud_generator #(
-        .BAUD_DIV(5208)//50000000/9600
+        .BAUD_DIV(5208)//50000000/9600 // Assumes clk = 50 MHz
     ) baud_gen_tx (
         .clk(clk),
         .rst_n(rst_n),
@@ -34,7 +35,7 @@ module tt_um_javibajocero_top (
 
     // RX baud generator (oversampled 8x)
     baud_generator #(
-        .BAUD_DIV(651)//50000000/9600*8
+        .BAUD_DIV(651)//50000000/9600*8 // Assumes clk = 50 MHz
     ) baud_gen_rx (
         .clk(clk),
         .rst_n(rst_n),
@@ -43,34 +44,33 @@ module tt_um_javibajocero_top (
 
     uart_tx uart_tx_inst (
         .clk(clk),
-        .rst_n(rst_n),
-        .tx_valid(tx_valid),
-        .tx_data(tx_data),
-        .tx_ready(tx_ready),
-        .tx_serial(tx_serial),
-        .baud_tick(baud_tick_tx)
+        .baud_tick(baud_tick_tx),
+        .send(tx_send),
+        .tx(tx_serial),
+        .busy(tx_busy)
     );
 
     // --- Connect inputs ---
-    wire [7:0] tx_data = ui_in;
-    wire tx_valid = uio_in[0];
-    
+    assign tx_send = ui_in[0];
+
     // --- Connect outputs ---
     assign uo_out[0] = baud_tick_rx;
     assign uo_out[1] = baud_tick_tx;
-    assign uo_out[2] = tx_ready;
+    assign uo_out[2] = 1;
     assign uo_out[3] = tx_serial; //UART serial output
 
-    assign uo_out[4] = 1;   //not used
+    assign uo_out[4] = tx_busy;
     assign uo_out[5] = 1;   //not used  
     assign uo_out[6] = 1;   //not used
     assign uo_out[7] = 1;   //not used
     assign uio_out[7:0]   = 8'b1; //not used
 
     // --- Connect bidi ---
-    assign uio_oe[7:0]   = 8'b0; //all inputs
+    assign uio_out[7:0] = 8'b1; // not used
+    assign uio_oe[7:0] = 8'b0;  // all inputs
+
 
     // Prevent unused warnings
-    wire _unused = &{ena, 1'b0};
+    wire _unused = ena;
 
 endmodule
