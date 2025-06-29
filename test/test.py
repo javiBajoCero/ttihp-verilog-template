@@ -96,8 +96,9 @@ async def test_uart_tx(dut):
 
     # Trigger transmission by setting ui_in[0] = 1
     dut.ui_in.value = 0b00000001
-    await ClockCycles(dut.clk, 1)
-    dut.ui_in.value = 0  # Deassert send quickly (single pulse)
+    while dut.uo_out.value[4] == 0:  # wait for tx_busy
+        await RisingEdge(dut.clk)
+    dut.ui_in.value = 0
 
     # Expected bytes: 'P', 'O', 'L', 'O', '\n'
     expected_bytes = [ord(c) for c in "POLO\n"]
