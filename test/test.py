@@ -28,7 +28,7 @@ async def test_baud_tick(dut):
 
     for i in range(max_cycles):
         await RisingEdge(dut.clk)
-        tick = dut.uo_out.value.integer & 0x01
+        tick = (dut.uo_out.value.integer >> 1) & 0x01  # uo_out[1]
         if tick and not prev:
             baud_tick_count += 1
             dut._log.info(f"Tick {baud_tick_count} seen at cycle {i}")
@@ -61,7 +61,7 @@ async def test_baud_tick_tx(dut):
 
     for i in range(max_cycles):
         await RisingEdge(dut.clk)
-        tick = (dut.uo_out.value.integer >> 1) & 0x01  # uo_out[1]
+        tick = (dut.uo_out.value.integer >> 2) & 0x01  # uo_out[2]
         if tick and not prev:
             baud_tick_count += 1
             dut._log.info(f"TX Tick {baud_tick_count} seen at cycle {i}")
@@ -75,17 +75,15 @@ async def test_baud_tick_tx(dut):
 def uart_encode(byte):
     """Returns UART frame as a list of bits: start + data (LSB first) + stop"""
     bits = [0]  # Start bit
-    bits += [(byte >> i) & 1 for i in range(8)]  # Data bits (LSB first)
+    bits += [(byte >> i) & 1 for i in range(8)]
     bits += [1]  # Stop bit
     return bits
 
-
 @cocotb.test()
 async def test_uart_tx(dut):
-    """Test UART TX: check if 'POLO\\n' is transmitted correctly"""
+    """Send 'MARCO' to RX and check if 'POLO!\\n\\r' is transmitted"""
 
-    # Start 50MHz clock
-    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50MHz
+    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50 MHz
 
     # Reset
     dut.rst_n.value = 0
@@ -94,36 +92,30 @@ async def test_uart_tx(dut):
     dut.rst_n.value = 1
     dut._log.info("Reset done")
 
-    # Trigger transmission by setting ui_in[0] = 1
-    dut.ui_in.value = 0b00000001
-    await ClockCycles(dut.clk, 10)  # Hold send high for 10 cycles
-    dut.ui_in.value = 0
+    # The RX line is idle high
+    dut.ui_in[0].value = 1
+    await ClockCycles(dut.clk, 100)
 
-    # Expected bytes: 'P', 'O', 'L', 'O', '\n'
-    expected_bytes = [ord(c) for c in "POLO\n"]
-    expected_bits = []
-    for byte in expected_bytes:
-        expected_bits += uart_encode(byte)
+    # Send "MARCO" to trigger response
+    for ch in "MARCO":
+        bits = uart_encode(ord(ch))
+        for bit in bits:
+            dut.ui_in[0].value = bit
+            await ClockCycles(dut.clk, 651)  # wait 1 baud @ 9600*8 (from your top)
+        dut._log.info(f"Sent char: {ch}")
 
+    # Wait for TX to start (uo_out[0] = tx line)
     received_bits = []
+    collecting = False
 
-    for i, expected in enumerate(expected_bits):
-        # Wait for a rising edge of baud_tick_tx (uo_out[1])
+    while len(received_bits) < 90:  # Expecting 9 bytes * 10 bits = 90 bits
         await RisingEdge(dut.clk)
-        while dut.uo_out.value[1] == 0:
-            await RisingEdge(dut.clk)
-        await ClockCycles(dut.clk, 1)
-        bit = int(dut.uo_out.value[3])
+        if dut.uo_out.value[1]:  # baud_tick_tx
+            tx_bit = int(dut.uo_out.value[0])  # tx_serial
+            received_bits.append(tx_bit)
+            dut._log.info(f"Bit {len(received_bits) - 1}: {tx_bit}")
 
-
-        tx_bit = int(dut.uo_out.value[3])  # tx_serial
-        received_bits.append(tx_bit)
-        dut._log.info(f"Bit {i}: {tx_bit}")
-
-    # ✅ Assert the first bit is start bit (0)
-    assert received_bits[0] == 0, "UART start bit not detected!"
-
-    # Reconstruct bytes and compare
+    # Decode bytes
     def decode_uart(bits):
         return [
             sum(bits[i + 1 + b] << b for b in range(8))
@@ -133,5 +125,6 @@ async def test_uart_tx(dut):
     received_bytes = decode_uart(received_bits)
     dut._log.info(f"Received bytes: {[chr(b) for b in received_bytes]}")
 
-    assert received_bytes == expected_bytes, \
-        f"Expected {expected_bytes}, got {received_bytes}"
+    # Match against full expected string
+    expected_bytes = [ord(c) for c in "\n\rPOLO!\n\r"]
+    assert received_bytes == expected_bytes, f"Expected {expected_bytes}, got {received_bytes}"

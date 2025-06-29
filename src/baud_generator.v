@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: No
-// Engineer: Javivi
+// Company: 
+// Engineer: 
 // 
 // Create Date: 06/16/2025 02:40:30 PM
 // Design Name: 
@@ -25,9 +25,9 @@ module baud_generator(
     input wire rst_n,
     output reg baud_tick
     );
-    parameter BAUD_DIV = 651;  //(50_000_000) / (9600 * 8) oversampling factor of 8
+    parameter BAUD_DIV = 1250;  // (12_000_000) / 9600
 
-    reg [12:0] counter;  // Enough bits to hold values up to 651
+    reg [12:0] counter;  // Enough bits to hold values up to 65535
     
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

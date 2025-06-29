@@ -1,77 +1,89 @@
 `timescale 1ns/1ps
-/*
- * Copyright (c) 2024 Your Name
- * SPDX-License-Identifier: Apache-2.0
- */
-
 `default_nettype none
 
 module tt_um_javibajocero_top (
-    input  wire [7:0] ui_in,    // Dedicated inputs
-    output wire [7:0] uo_out,   // Dedicated outputs
-    input  wire [7:0] uio_in,   // IOs: Input path
-    output wire [7:0] uio_out,  // IOs: Output path
-    output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
-    input  wire       clk,      // clock
-    input  wire       rst_n     // reset_n - low to reset
+    input  wire [7:0] ui_in,
+    output wire [7:0] uo_out,
+    input  wire [7:0] uio_in,
+    output wire [7:0] uio_out,
+    output wire [7:0] uio_oe,
+    input  wire       ena,
+    input  wire       clk,
+    input  wire       rst_n
 );
 
-    // --- Internal signals ---
+    // --- UART Baud Generators ---
     wire baud_tick_tx;
     wire baud_tick_rx;
-    wire tx_serial;
-    wire tx_send;
-    wire tx_busy;
 
-    // TX baud generator (9600 baud)
-    baud_generator #(
-        .BAUD_DIV(5208)//50000000/9600 // Assumes clk = 50 MHz
-    ) baud_gen_tx (
+    baud_generator #(.BAUD_DIV(5208)) baud_gen_tx ( // 50MHz / 9600
         .clk(clk),
         .rst_n(rst_n),
         .baud_tick(baud_tick_tx)
     );
 
-    // RX baud generator (oversampled 8x)
-    baud_generator #(
-        .BAUD_DIV(651)//50000000/9600*8 // Assumes clk = 50 MHz
-    ) baud_gen_rx (
+    baud_generator #(.BAUD_DIV(651)) baud_gen_rx ( // 50MHz / (9600 * 8)
         .clk(clk),
         .rst_n(rst_n),
         .baud_tick(baud_tick_rx)
     );
 
+    // --- UART RX ---
+    wire [7:0] rx_data;
+    wire       rx_valid;
+
+    uart_rx uart_rx_inst (
+        .clk(clk),
+        .rst_n(rst_n),
+        .baud_tick(baud_tick_rx),
+        .rx(uio_in[0]),     // RX from pin
+        .data(rx_data),
+        .data_valid(rx_valid)
+    );
+
+    // --- Buffer Comparator (detect "MARCO") ---
+    wire trigger_send;
+
+    buffer_comparator comp (
+        .clk(clk),
+        .rst_n(rst_n),
+        .data_valid(rx_valid),
+        .data(rx_data),
+        .match(trigger_send)
+    );
+
+    // --- UART TX ---
+    wire tx_busy;
+    wire tx_serial;
+
     uart_tx uart_tx_inst (
         .clk(clk),
         .rst_n(rst_n),
         .baud_tick(baud_tick_tx),
-        .send(tx_send),
+        .send(trigger_send),
         .tx(tx_serial),
         .busy(tx_busy)
     );
 
-    // --- Connect inputs ---
-    assign tx_send = ui_in[0];
-
-    // --- Connect outputs ---
-    assign uo_out[0] = baud_tick_rx;
-    assign uo_out[1] = baud_tick_tx;
-    assign uo_out[2] = 1;
-    assign uo_out[3] = tx_serial; //UART serial output
-
+    // --- Output Connections ---
+    assign uo_out[0] = tx_serial;
+    assign uo_out[1] = baud_tick_rx;
+    assign uo_out[2] = baud_tick_tx;
+    assign uo_out[3] = trigger_send;
     assign uo_out[4] = tx_busy;
-    assign uo_out[5] = 1;   //not used  
-    assign uo_out[6] = 1;   //not used
-    assign uo_out[7] = 1;   //not used
-    assign uio_out[7:0]   = 8'b1; //not used
+    assign uo_out[5] = 1'b1;
+    assign uo_out[6] = 1'b1;
+    assign uo_out[7] = 1'b1;
 
-    // --- Connect bidi ---
-    assign uio_out[7:0] = 8'b1; // not used
-    assign uio_oe[7:0] = 8'b0;  // all inputs
+    // --- UART TX routing to IO pin ---
+    assign uio_out[0] = tx_serial;
+    assign uio_oe[0]  = 1'b1;
 
+    // --- All other IOs unused ---
+    assign uio_out[7:1] = 7'b0;
+    assign uio_oe[7:1]  = 7'b0;
 
-    // Prevent unused warnings
-    wire _unused = ena;
+    // Unused signal suppression
+    wire _unused = ena | &ui_in;
 
 endmodule
