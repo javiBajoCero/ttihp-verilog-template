@@ -55,7 +55,6 @@ module uart_tx (
                     sending <= 1'b0;
                     if (send) begin
                         byte_index <= 0;
-                        shift_reg <= message[0];
                         state <= START_BIT;
                         sending <= 1'b1;
                     end
@@ -63,7 +62,8 @@ module uart_tx (
 
                 START_BIT: begin
                     if (baud_tick) begin
-                        tx_reg <= 1'b0; // Start bit
+                        tx_reg <= 1'b0;                      // start bit
+                        shift_reg <= message[byte_index];   // load correct byte here!
                         bit_index <= 0;
                         state <= DATA_BITS;
                     end
