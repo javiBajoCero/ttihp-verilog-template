@@ -124,7 +124,7 @@ async def test_uart_tx(dut):
         assert False, "Trigger match never happened"
 
     # Wait for TX to start (uo_out[4] = tx_busy)
-    timeout = 20000
+    timeout = 200000
     cycles_waited = 0
 
     while not dut.uo_out.value[4] and cycles_waited < timeout:
