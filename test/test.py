@@ -100,13 +100,14 @@ async def test_uart_tx(dut):
 
         for bit in bits:
             dut.ui_in[0].value = bit
-            await ClockCycles(dut.clk, 653)  # Slightly longer than 9600*8 baud tick
+            await ClockCycles(dut.clk, 653)  # Baud tick (oversampled)
 
-        # Return line to idle high and delay a bit to allow stop bit and FSM transition
+        # Ensure RX line stays idle after full frame (10+ bits worth of delay)
         dut.ui_in[0].value = 1
-        await ClockCycles(dut.clk, 653 * 4)  # 4 stop bits time
+        await ClockCycles(dut.clk, 653 * 12)  # Full frame delay (10 bits + margin)
 
         dut._log.info(f"Sent char: {ch}")
+
 
     # Wait until TX trigger is detected (uo_out[3])
     dut._log.info("Sent all bytes, checking for trigger and RX activity")
