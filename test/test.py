@@ -132,19 +132,18 @@ async def test_uart_tx(dut):
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
     received_bits = []
     received_timestamps = []
-    prev_bit = 1;
+    IDLE_LINE=1;
     
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         old_flank=1;
         bit = (dut.uo_out.value.integer >> 0) & 1
-        if prev_bit == 1 and bit == 0: # detect every initial flank
-            prev_bit=bit
+        if bit != IDLE_LINE:  # detect every initial flank
             received_bits.append(bit)
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
             dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-            await ClockCycles(dut.clk, 1)         #sampling at almost half period
+            await ClockCycles(dut.clk, 5)         #sampling a bit
             
             for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
                 await ClockCycles(dut.clk, 5208)
@@ -154,7 +153,6 @@ async def test_uart_tx(dut):
                 received_timestamps.append(timestamp)
                 if counting == 8:
                     dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-                    prev_bit=bit
                 else:
                     dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             
