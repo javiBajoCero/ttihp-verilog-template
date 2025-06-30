@@ -149,8 +149,8 @@ async def test_uart_tx(dut):
     received_bits = []
     received_timestamps = []
     old_flank=1;
-    
-    while len(received_bits) < expected_bits:
+    timestamp=0;
+    while len(received_bits) < expected_bits and timestamp<20000000:
         await RisingEdge(dut.clk)
         old_flank=1;
         if ((dut.uo_out.value.integer >> 0) & 1 ) != old_flank:  # detect every initial flank
