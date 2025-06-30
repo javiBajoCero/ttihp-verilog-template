@@ -142,8 +142,9 @@ async def test_uart_tx(dut):
             received_bits.append(bit)
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
+            dut._log.info(f"Flank at {timestamp} ns")
+            await ClockCycles(dut.clk, 20)         #tiny weeny offset to get away from the flank
             
-            await ClockCycles(dut.clk, 100)         #tiny weeny offset to get away from the flank
             for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
                 await ClockCycles(dut.clk, 5208)
                 bit = (dut.uo_out.value.integer >> 0) & 1
@@ -168,7 +169,7 @@ async def test_uart_tx(dut):
             for b in range(8):
                 byte_val |= bits[i + 1 + b] << b
             bytes_out.append(byte_val)
-            dut._log.info(f"Frame {i//10}:{byte_val}, start={start_bit}, stop={stop_bit}")
+            dut._log.info(f"Frame {i//10}: start={start_bit}, stop={stop_bit}")
         return bytes_out
 
 
