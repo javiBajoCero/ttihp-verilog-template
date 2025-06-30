@@ -122,7 +122,8 @@ async def test_uart_tx(dut):
     for _ in range(10000):
         await RisingEdge(dut.clk)
         if dut.uo_out.value[3]:  # trigger_send
-            dut._log.info("TRIGGER MATCHED! TX should start soon.")
+            timestamp = get_sim_time(units="ns")
+            dut._log.info("TRIGGER MATCHED {timestamp} ns! TX should start soon.")
             break
     else:
         assert False, "Trigger match never happened"
@@ -138,11 +139,12 @@ async def test_uart_tx(dut):
         await RisingEdge(dut.clk)
         old_flank=1;
         if ((dut.uo_out.value.integer >> 0) & 1 ) != IDLE_LINE:  # detect every initial flank
-            received_bits.append(0) #starts with 0
+            bit = (dut.uo_out.value.integer >> 0) & 1
+            received_bits.append(bit)
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
             dut._log.info(f"Flank at {timestamp} ns")
-            await ClockCycles(dut.clk, 10)         #tiny weeny offset to get away from the flank
+            await ClockCycles(dut.clk, 20)         #tiny weeny offset to get away from the flank
             
             for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
                 await ClockCycles(dut.clk, 5208)
