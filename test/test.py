@@ -153,7 +153,7 @@ async def test_uart_tx(dut):
                 received_timestamps.append(timestamp)
                 if counting == 8:
                     dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-                    dut._log.info(f"Length pf byte {tstart_byte_timestamp-timestamp} ns")
+                    dut._log.info(f"Length pf byte {timestamp-tstart_byte_timestamp} ns")
                 else:
                     dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             
