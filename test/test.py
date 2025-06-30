@@ -143,7 +143,7 @@ async def test_uart_tx(dut):
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
             dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-            await ClockCycles(dut.clk, 2000)         #sampling at almost half period
+            await ClockCycles(dut.clk, 1)         #sampling at almost half period
             
             for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
                 await ClockCycles(dut.clk, 5208)
