@@ -101,25 +101,26 @@ async def test_uart_tx(dut):
         for bit in bits:
             dut.ui_in[0].value = bit
 
-            # Wait half bit period (middle of bit)
+            # Wait half bit period (to position bit stable in middle of UART sampling)
             await ClockCycles(dut.clk, 651 // 2)
 
             # Wait for baud_tick_rx to rise (middle of bit)
             await RisingEdge(dut.clk)
-            while not dut.uo_out.value[1]:
+            while not dut.uo_out.value[1]:  # baud_tick_rx
                 await RisingEdge(dut.clk)
-        # After sending each character
-        await ClockCycles(dut.clk, 651 * 12)  # full frame + margin
+
+        # After sending each character, hold idle for full frame + margin to allow receiver processing
+        dut.ui_in[0].value = 1
+        await ClockCycles(dut.clk, 651 * 12)
+
         dut._log.info(f"Sent char: {ch}")
+        # Log reception status
         dut._log.info(f"byte_received: {int(dut.rx_valid.value)}")
         dut._log.info(f"data: {int(dut.rx_data.value)}")
 
     # Return line to idle and wait longer for stop bit + idle
     dut.ui_in[0].value = 1
     await ClockCycles(dut.clk, 651 * 12)
-
-    dut._log.info(f"Sent char: {ch}")
-
 
     # Wait until TX trigger is detected (uo_out[3])
     dut._log.info("Sent all bytes, checking for trigger and RX activity")
@@ -163,3 +164,4 @@ async def test_uart_tx(dut):
     # Expected response from TX
     expected_bytes = [ord(c) for c in "\n\rPOLO!\n\r"]
     assert received_bytes == expected_bytes, f"Expected {expected_bytes}, got {received_bytes}"
+
