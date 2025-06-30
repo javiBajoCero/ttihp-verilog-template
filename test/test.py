@@ -97,30 +97,28 @@ async def test_uart_tx(dut):
     # Send "MARCO" to trigger UART TX response
     for ch in "MARCO":
         bits = uart_encode(ord(ch))
-        
-        # Send full UART frame bit by bit
+
         for bit in bits:
             dut.ui_in[0].value = bit
-            await ClockCycles(dut.clk, 651)  # wait 1 baud @ 9600*8
+            await ClockCycles(dut.clk, 653)  # Slightly longer than 9600*8 baud tick
 
-        # Return line to idle and hold it for a few cycles (important!)
+        # Return line to idle high and delay a bit to allow stop bit and FSM transition
         dut.ui_in[0].value = 1
-        await ClockCycles(dut.clk, 651 * 4)  # allow time for stop bit + inter-byte delay
+        await ClockCycles(dut.clk, 653 * 4)  # 4 stop bits time
 
         dut._log.info(f"Sent char: {ch}")
 
-
-    # 🔍 Log state after sending
+    # Wait until TX trigger is detected (uo_out[3])
     dut._log.info("Sent all bytes, checking for trigger and RX activity")
-    for _ in range(5000):
+    for _ in range(10000):
         await RisingEdge(dut.clk)
-#        if dut.uo_out.value[1]:  # baud_tick_rx
-#            dut._log.info("baud_tick_rx pulse detected")
         if dut.uo_out.value[3]:  # trigger_send
             dut._log.info("TRIGGER MATCHED! TX should start soon.")
             break
+    else:
+        assert False, "Trigger match never happened"
 
-    # Wait for TX to start: uo_out[4] = tx_busy
+    # Wait for TX to start (uo_out[4] = tx_busy)
     for _ in range(10000):
         await RisingEdge(dut.clk)
         if dut.uo_out.value[4]:  # tx_busy
