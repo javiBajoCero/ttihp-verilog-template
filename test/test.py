@@ -148,11 +148,13 @@ async def test_uart_tx(dut):
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
     received_bits = []
     received_timestamps = []
+    old_flank=1;
     
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
-        if (dut.uo_out.value.integer >> 2) & 1:  # baud_tick_tx
+        if ((dut.uo_out.value.integer >> 0) & 1 ) != old_flank:  # asynch
             bit = (dut.uo_out.value.integer >> 0) & 1
+            old_flank=bit;
             timestamp = get_sim_time(units="ns")
             received_bits.append(bit)
             received_timestamps.append(timestamp)
