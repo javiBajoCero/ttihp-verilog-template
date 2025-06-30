@@ -97,10 +97,18 @@ async def test_uart_tx(dut):
     # Send "MARCO" to trigger UART TX response
     for ch in "MARCO":
         bits = uart_encode(ord(ch))
+        
+        # Send full UART frame bit by bit
         for bit in bits:
             dut.ui_in[0].value = bit
-            await ClockCycles(dut.clk, 651)  # 9600 baud * 8 oversampling
+            await ClockCycles(dut.clk, 651)  # wait 1 baud @ 9600*8
+
+        # Return line to idle and hold it for a few cycles (important!)
+        dut.ui_in[0].value = 1
+        await ClockCycles(dut.clk, 651 * 4)  # allow time for stop bit + inter-byte delay
+
         dut._log.info(f"Sent char: {ch}")
+
 
     # 🔍 Log state after sending
     dut._log.info("Sent all bytes, checking for trigger and RX activity")
