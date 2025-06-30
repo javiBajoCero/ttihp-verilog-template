@@ -128,58 +128,50 @@ async def test_uart_tx(dut):
     # Wait for TX to start (uo_out[4] = tx_busy)
     timeout = 200000
     cycles_waited = 0
-
     while cycles_waited < timeout:
         await RisingEdge(dut.clk)
-        bit4 = (dut.uo_out.value.integer >> 4) & 1
-        if bit4:
+        if (dut.uo_out.value.integer >> 4) & 1:  # tx_busy
             dut._log.info("TX started (tx_busy is high)")
             break
         cycles_waited += 1
-
-    if cycles_waited == timeout:
+    else:
         assert False, "TX never started (tx_busy never went high)"
 
-    # Capture TX while busy
-    received_bits = []
-    bit4 = (dut.uo_out.value.integer >> 4) & 1
-    while bit4:  # while tx_busy
-        bit4 = (dut.uo_out.value.integer >> 4) & 1
+    # Wait for first falling edge on tx line (start bit)
+    await RisingEdge(dut.clk)
+    while ((dut.uo_out.value.integer >> 0) & 1) == 1:
         await RisingEdge(dut.clk)
-        bit2 = (dut.uo_out.value.integer >> 2) & 1
-        if bit2:  # baud_tick_tx
-            bit0 = (dut.uo_out.value.integer >> 0) & 1
-            tx_bit = int(bit0)
-            received_bits.append(tx_bit)
-            dut._log.info(f"TX Bit {len(received_bits) - 1}: {tx_bit}")
 
-    # Safe decode UART frames from bits
+    # Now capture bits on baud_tick_tx edges
+    expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
+    received_bits = []
+
+    while len(received_bits) < expected_bits:
+        await RisingEdge(dut.clk)
+        if (dut.uo_out.value.integer >> 2) & 1:  # baud_tick_tx
+            bit = (dut.uo_out.value.integer >> 0) & 1
+            received_bits.append(bit)
+            dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit}")
+
+    # Decode UART frames as before
     def decode_uart(bits):
         bytes_out = []
         for i in range(0, len(bits), 10):
             if i + 9 >= len(bits):
                 break  # incomplete frame
-            # bits[i] = start bit (should be 0)
-            # bits[i+1..i+8] = data bits LSB first
-            # bits[i+9] = stop bit (should be 1)
             start_bit = bits[i]
             stop_bit = bits[i + 9]
             if start_bit != 0 or stop_bit != 1:
-                # Frame error - skip or handle as needed
-                continue
+                continue  # skip frame with framing error
             byte_val = 0
             for b in range(8):
                 byte_val |= bits[i + 1 + b] << b
             bytes_out.append(byte_val)
         return bytes_out
 
-
     received_bytes = decode_uart(received_bits)
     received_chars = [chr(b) for b in received_bytes]
     dut._log.info(f"Received bytes: {received_chars}")
 
-    # Expected output
     expected_bytes = [ord(c) for c in "\n\rPOLO!\n\r"]
     assert received_bytes == expected_bytes, f"Expected {expected_bytes}, got {received_bytes}"
-
-
