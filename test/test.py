@@ -102,6 +102,16 @@ async def test_uart_tx(dut):
             await ClockCycles(dut.clk, 651)  # 9600 baud * 8 oversampling
         dut._log.info(f"Sent char: {ch}")
 
+    # 🔍 Log state after sending
+    dut._log.info("Sent all bytes, checking for trigger and RX activity")
+    for _ in range(5000):
+        await RisingEdge(dut.clk)
+        if dut.uo_out.value[1]:  # baud_tick_rx
+            dut._log.info("baud_tick_rx pulse detected")
+        if dut.uo_out.value[3]:  # trigger_send
+            dut._log.info("TRIGGER MATCHED! TX should start soon.")
+            break
+
     # Wait for TX to start: uo_out[4] = tx_busy
     for _ in range(10000):
         await RisingEdge(dut.clk)
