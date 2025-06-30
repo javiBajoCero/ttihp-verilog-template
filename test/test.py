@@ -142,19 +142,19 @@ async def test_uart_tx(dut):
             received_bits.append(bit)
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
-            dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-            await ClockCycles(dut.clk, 5208/2)         #sampling at half period
-            
-            for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
-                await ClockCycles(dut.clk, 5208)
-                bit = (dut.uo_out.value.integer >> 0) & 1
-                timestamp = get_sim_time(units="ns")
-                received_bits.append(bit)
-                received_timestamps.append(timestamp)
-                if counting == 8:
-                    dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-                else:
-                    dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+            dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")            
+            # Wait half a baud to sample mid-bit
+            await ClockCycles(dut.clk, 2604)  # Half of 5208
+    for counting in range(8 + 1):  # 8 data bits + stop bit
+        bit = (dut.uo_out.value.integer >> 0) & 1
+        timestamp = get_sim_time(units="ns")
+        received_bits.append(bit)
+        received_timestamps.append(timestamp)
+        if counting == 8:
+            dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+        else:
+            dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+        await ClockCycles(dut.clk, 5208)
             
 
     # Decode UART frames as before
