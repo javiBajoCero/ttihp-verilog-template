@@ -133,15 +133,15 @@ async def test_uart_tx(dut):
     received_bits = []
     received_timestamps = []
     IDLE_LINE=1;
-    
+    tstart_byte_timestamp=0;
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         old_flank=1;
         bit = (dut.uo_out.value.integer >> 0) & 1
         if bit != IDLE_LINE:  # detect every initial flank
             received_bits.append(bit)
-            timestamp = get_sim_time(units="ns")
-            received_timestamps.append(timestamp)
+            tstart_byte_timestamp = get_sim_time(units="ns")
+            received_timestamps.append(tstart_byte_timestamp)
             dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             await ClockCycles(dut.clk, 5)         #sampling a bit
             
@@ -153,6 +153,7 @@ async def test_uart_tx(dut):
                 received_timestamps.append(timestamp)
                 if counting == 8:
                     dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+                    dut._log.info(f"Length pf byte {tstart_byte_timestamp-timestamp} ns")
                 else:
                     dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             
