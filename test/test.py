@@ -114,8 +114,8 @@ async def test_uart_tx(dut):
         # Hold line idle for stop bit and inter-byte delay (2 bit times)
         dut.ui_in[0].value = 1
         await ClockCycles(dut.clk, bit_duration * 2)
-
-        dut._log.info(f"Sent char: {ch}")
+        timestamp = get_sim_time(units="ns")
+        dut._log.info(f"Sent char: {ch}, {timestamp} ns")
 
     # Wait for trigger_send signal (uo_out[3])
     dut._log.info("Sent all bytes, checking for trigger and RX activity")
