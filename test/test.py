@@ -95,7 +95,7 @@ async def test_uart_tx(dut):
     await ClockCycles(dut.clk, 100)
 
     # Send "MARCO" to trigger UART TX response
-    for ch in "MARCO":
+    for ch in "MARCO ":
         bits = uart_encode(ord(ch))
         for bit in bits:
             dut.ui_in[0].value = bit
@@ -106,8 +106,8 @@ async def test_uart_tx(dut):
     dut._log.info("Sent all bytes, checking for trigger and RX activity")
     for _ in range(5000):
         await RisingEdge(dut.clk)
-        if dut.uo_out.value[1]:  # baud_tick_rx
-            dut._log.info("baud_tick_rx pulse detected")
+#        if dut.uo_out.value[1]:  # baud_tick_rx
+#            dut._log.info("baud_tick_rx pulse detected")
         if dut.uo_out.value[3]:  # trigger_send
             dut._log.info("TRIGGER MATCHED! TX should start soon.")
             break
