@@ -123,7 +123,7 @@ async def test_uart_tx(dut):
         await RisingEdge(dut.clk)
         if dut.uo_out.value[3]:  # trigger_send
             timestamp = get_sim_time(units="ns")
-            dut._log.info("TRIGGER MATCHED {timestamp} ns! TX should start soon.")
+            dut._log.info(f"TRIGGER MATCHED {timestamp} ns! TX should start soon.")
             break
     else:
         assert False, "Trigger match never happened"
