@@ -127,14 +127,16 @@ async def test_uart_tx(dut):
     timeout = 200000
     cycles_waited = 0
 
-    while not dut.uo_out.value[4] and cycles_waited < timeout:
+    while cycles_waited < timeout:
         await RisingEdge(dut.clk)
+        bit4 = (dut.uo_out.value.integer >> 4) & 1
+        if bit4:
+            dut._log.info("TX started (tx_busy is high)")
+            break
         cycles_waited += 1
 
     if cycles_waited == timeout:
         assert False, "TX never started (tx_busy never went high)"
-    else:
-        dut._log.info("TX started (tx_busy is high)")
 
     # Capture TX while busy
     received_bits = []
