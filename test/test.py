@@ -72,9 +72,6 @@ async def test_baud_tick_tx(dut):
     assert baud_tick_count >= 10, f"Expected 10 TX baud ticks, got {baud_tick_count}"
     
 
-def uart_encode(byte):
-    """Returns UART frame as a list of bits: start + data (LSB first) + stop"""
-    return [0] + [(byte >> i) & 1 for i in range(8)] + [1]
 
 
 def uart_encode(byte):
@@ -162,9 +159,20 @@ async def test_uart_tx(dut):
         for i in range(0, len(bits), 10):
             if i + 9 >= len(bits):
                 break  # incomplete frame
-            byte_val = sum(bits[i + 1 + b] << b for b in range(8))
+            # bits[i] = start bit (should be 0)
+            # bits[i+1..i+8] = data bits LSB first
+            # bits[i+9] = stop bit (should be 1)
+            start_bit = bits[i]
+            stop_bit = bits[i + 9]
+            if start_bit != 0 or stop_bit != 1:
+                # Frame error - skip or handle as needed
+                continue
+            byte_val = 0
+            for b in range(8):
+                byte_val |= bits[i + 1 + b] << b
             bytes_out.append(byte_val)
         return bytes_out
+
 
     received_bytes = decode_uart(received_bits)
     received_chars = [chr(b) for b in received_bytes]
