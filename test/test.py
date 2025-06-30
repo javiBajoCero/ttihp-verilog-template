@@ -138,14 +138,19 @@ async def test_uart_tx(dut):
     if cycles_waited == timeout:
         assert False, "TX never started (tx_busy never went high)"
 
-    # Capture TX while busy
-    received_bits = []
-    while dut.uo_out.value[4]:  # while tx_busy
+    # Wait for first baud_tick_tx after tx_busy goes high
+    await RisingEdge(dut.clk)
+    while not dut.uo_out.value.integer & (1 << 1):  # wait for baud_tick_tx = uo_out[1]
         await RisingEdge(dut.clk)
-        if dut.uo_out.value[1]:  # baud_tick_tx
-            tx_bit = int(dut.uo_out.value[0])
-            received_bits.append(tx_bit)
-            dut._log.info(f"TX Bit {len(received_bits) - 1}: {tx_bit}")
+
+    received_bits = []
+
+    while dut.uo_out.value.integer & (1 << 4):  # while tx_busy = uo_out[4]
+        await RisingEdge(dut.clk)
+        if dut.uo_out.value.integer & (1 << 1):  # baud_tick_tx rising edge
+            bit = (dut.uo_out.value.integer >> 0) & 1  # tx_serial = uo_out[0]
+            received_bits.append(bit)
+            dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit}")
 
     # Decode UART frames from bits
     def decode_uart(bits):
