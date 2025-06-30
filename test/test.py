@@ -95,7 +95,7 @@ async def test_uart_tx(dut):
     await ClockCycles(dut.clk, 100)
 
     # Send "MARCO" to trigger UART TX response
-    for ch in "MARCO ":
+    for ch in "MARCO":
         bits = uart_encode(ord(ch))
         for bit in bits:
             dut.ui_in[0].value = bit
