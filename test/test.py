@@ -132,13 +132,14 @@ async def test_uart_tx(dut):
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
     received_bits = []
     received_timestamps = []
-    IDLE_LINE=1;
+    prev_bit = 1;
     
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         old_flank=1;
         bit = (dut.uo_out.value.integer >> 0) & 1
-        if bit != IDLE_LINE:  # detect every initial flank
+        if prev_bit == 1 and bit == 0: # detect every initial flank
+            prev_bit=bit
             received_bits.append(bit)
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
