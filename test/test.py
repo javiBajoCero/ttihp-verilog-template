@@ -156,6 +156,9 @@ async def test_uart_tx(dut):
         if ((dut.uo_out.value.integer >> 0) & 1 ) != old_flank:  # detect every initial flank
             bit = (dut.uo_out.value.integer >> 0) & 1
             old_flank=bit;
+            received_bits.append(bit)
+            timestamp = get_sim_time(units="ns")
+            received_timestamps.append(timestamp)
             await ClockCycles(dut.clk, 100)
             for counting in range(8+1):
                 await ClockCycles(dut.clk, 5208)
