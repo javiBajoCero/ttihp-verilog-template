@@ -54,7 +54,6 @@ module tt_um_javibajocero_top (
     );
 
     // --- UART TX ---
-    wire tx_busy;
     wire tx_serial;
 
     uart_tx uart_tx_inst (
@@ -63,7 +62,7 @@ module tt_um_javibajocero_top (
         .baud_tick(baud_tick_tx),
         .send(trigger_send),
         .tx(tx_serial),
-        .busy(tx_busy)
+        .busy(uo_out[4])
     );
 
     // --- Output Connections ---
@@ -71,7 +70,7 @@ module tt_um_javibajocero_top (
     assign uo_out[1] = baud_tick_rx;
     assign uo_out[2] = baud_tick_tx;
     assign uo_out[3] = trigger_send;
-    assign uo_out[4] = tx_busy;
+
     assign uo_out[5] = 1'b1;
     assign uo_out[6] = 1'b1;
     assign uo_out[7] = 1'b1;
