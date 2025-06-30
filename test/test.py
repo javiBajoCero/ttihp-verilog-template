@@ -100,13 +100,9 @@ async def test_uart_tx(dut):
 
         for bit in bits:
             dut.ui_in[0].value = bit
-
-            # Wait half bit period (to position bit stable in middle of UART sampling)
-            await ClockCycles(dut.clk, 651 // 2)
-
-            # Wait for baud_tick_rx to rise (middle of bit)
+            await ClockCycles(dut.clk, 651 * 8 // 2)  # half bit time
             await RisingEdge(dut.clk)
-            while not dut.uo_out.value[1]:  # baud_tick_rx
+            while not dut.uo_out.value[1]:  # wait for baud_tick_rx
                 await RisingEdge(dut.clk)
 
         # After sending each character, hold idle for full frame + margin to allow receiver processing
