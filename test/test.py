@@ -5,6 +5,7 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge
+from cocotb.utils import get_sim_time
 
 @cocotb.test()
 async def test_baud_tick(dut):
@@ -145,14 +146,17 @@ async def test_uart_tx(dut):
 
     # Now capture bits on baud_tick_tx edges
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
-    received_bits = []
+    received_timestamps = []
 
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         if (dut.uo_out.value.integer >> 2) & 1:  # baud_tick_tx
             bit = (dut.uo_out.value.integer >> 0) & 1
+            timestamp = get_sim_time(units="ns")
             received_bits.append(bit)
-            dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit}")
+            received_timestamps.append(timestamp)
+            dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+            
 
     # Decode UART frames as before
     def decode_uart(bits):
