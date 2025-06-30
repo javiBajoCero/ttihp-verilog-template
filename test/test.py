@@ -161,12 +161,14 @@ async def test_uart_tx(dut):
             start_bit = bits[i]
             stop_bit = bits[i + 9]
             if start_bit != 0 or stop_bit != 1:
-                continue  # skip frame with framing error
+                dut._log.warning(f"Frame {i//10} framing error: start={start_bit}, stop={stop_bit}")
+                continue
             byte_val = 0
             for b in range(8):
                 byte_val |= bits[i + 1 + b] << b
             bytes_out.append(byte_val)
         return bytes_out
+
 
     received_bytes = decode_uart(received_bits)
     received_chars = [chr(b) for b in received_bytes]
