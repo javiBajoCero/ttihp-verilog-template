@@ -168,6 +168,7 @@ async def test_uart_tx(dut):
             for b in range(8):
                 byte_val |= bits[i + 1 + b] << b
             bytes_out.append(byte_val)
+            dut._log.info(f"Frame {i//10}:{byte_val}, start={start_bit}, stop={stop_bit}")
         return bytes_out
 
 
