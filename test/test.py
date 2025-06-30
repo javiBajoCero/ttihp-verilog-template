@@ -100,13 +100,20 @@ async def test_uart_tx(dut):
 
         for bit in bits:
             dut.ui_in[0].value = bit
-            await ClockCycles(dut.clk, 653)  # Baud tick (oversampled)
 
-        # Ensure RX line stays idle after full frame (10+ bits worth of delay)
-        dut.ui_in[0].value = 1
-        await ClockCycles(dut.clk, 653 * 12)  # Full frame delay (10 bits + margin)
+            # Wait half bit period (middle of bit)
+            await ClockCycles(dut.clk, 651 // 2)
 
-        dut._log.info(f"Sent char: {ch}")
+            # Wait for baud_tick_rx to rise (middle of bit)
+            await RisingEdge(dut.clk)
+            while not dut.uo_out.value[1]:
+                await RisingEdge(dut.clk)
+
+    # Return line to idle and wait longer for stop bit + idle
+    dut.ui_in[0].value = 1
+    await ClockCycles(dut.clk, 651 * 12)
+
+    dut._log.info(f"Sent char: {ch}")
 
 
     # Wait until TX trigger is detected (uo_out[3])
