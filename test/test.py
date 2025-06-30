@@ -117,6 +117,16 @@ async def test_uart_tx(dut):
 
         dut._log.info(f"Sent char: {ch}")
 
+    # Wait for trigger_send signal (uo_out[3])
+    dut._log.info("Sent all bytes, checking for trigger and RX activity")
+    for _ in range(10000):
+        await RisingEdge(dut.clk)
+        if dut.uo_out.value[3]:  # trigger_send
+            timestamp = get_sim_time(units="ns")
+            dut._log.info(f"TRIGGER MATCHED {timestamp} ns! TX should start soon.")
+            break
+    else:
+        assert False, "Trigger match never happened"
 
     # Now capture bits on baud_tick_tx edges
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
@@ -128,12 +138,12 @@ async def test_uart_tx(dut):
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         old_flank=1;
-        if ((dut.uo_out.value.integer >> 0) & 1 ) != IDLE_LINE:  # detect every initial flank
-            bit = (dut.uo_out.value.integer >> 0) & 1
+        bit = (dut.uo_out.value.integer >> 0) & 1
+        if bit != IDLE_LINE:  # detect every initial flank
             received_bits.append(bit)
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
-            dut._log.info(f"Flank at {timestamp} ns")
+            dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             await ClockCycles(dut.clk, 20)         #tiny weeny offset to get away from the flank
             
             for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
