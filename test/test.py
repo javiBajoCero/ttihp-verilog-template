@@ -102,10 +102,18 @@ async def test_uart_tx(dut):
             await ClockCycles(dut.clk, 651)  # 9600 baud * 8 oversampling
         dut._log.info(f"Sent char: {ch}")
 
-    # Collect TX output from uo_out[0] on each baud tick (uo_out[1] = baud_tick_tx)
-    received_bits = []
+    # Wait for TX to start: uo_out[4] = tx_busy
+    for _ in range(10000):
+        await RisingEdge(dut.clk)
+        if dut.uo_out.value[4]:  # tx_busy
+            dut._log.info("TX started (tx_busy is high)")
+            break
+    else:
+        assert False, "TX never started (tx_busy never went high)"
 
-    while len(received_bits) < 90:  # 9 bytes * 10 bits = 90 bits
+    # Capture TX while tx_busy is high
+    received_bits = []
+    while dut.uo_out.value[4]:  # while tx_busy
         await RisingEdge(dut.clk)
         if dut.uo_out.value[1]:  # baud_tick_tx
             tx_bit = int(dut.uo_out.value[0])
