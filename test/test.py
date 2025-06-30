@@ -87,8 +87,10 @@ async def test_uart_tx(dut):
 
     # Reset
     dut.rst_n.value = 0
-    dut.ui_in.value = 0
-    await ClockCycles(dut.clk, 5)
+    # Safe initial state: all high
+    dut.ui_in.value = 0b11111111
+    await ClockCycles(dut.clk, 10)
+    dut.ui_in[0].value = 0
     dut.rst_n.value = 1
     dut._log.info("Reset done")
 
