@@ -77,6 +77,11 @@ def uart_encode(byte):
     return [0] + [(byte >> i) & 1 for i in range(8)] + [1]
 
 
+def uart_encode(byte):
+    """Returns UART frame as a list of bits: start + data (LSB first) + stop"""
+    return [0] + [(byte >> i) & 1 for i in range(8)] + [1]
+
+
 @cocotb.test()
 async def test_uart_tx(dut):
     """Send 'MARCO' to RX and check if '\\n\\rPOLO!\\n\\r' is transmitted"""
@@ -144,19 +149,22 @@ async def test_uart_tx(dut):
     while bit4:  # while tx_busy
         bit4 = (dut.uo_out.value.integer >> 4) & 1
         await RisingEdge(dut.clk)
-        bit1 = (dut.uo_out.value.integer >> 2) & 1
-        if bit1:  # baud_tick_tx
+        bit2 = (dut.uo_out.value.integer >> 2) & 1
+        if bit2:  # baud_tick_tx
             bit0 = (dut.uo_out.value.integer >> 0) & 1
             tx_bit = int(bit0)
             received_bits.append(tx_bit)
             dut._log.info(f"TX Bit {len(received_bits) - 1}: {tx_bit}")
 
-    # Decode UART frames from bits
+    # Safe decode UART frames from bits
     def decode_uart(bits):
-        return [
-            sum(bits[i + 1 + b] << b for b in range(8))
-            for i in range(0, len(bits), 10)
-        ]
+        bytes_out = []
+        for i in range(0, len(bits), 10):
+            if i + 9 >= len(bits):
+                break  # incomplete frame
+            byte_val = sum(bits[i + 1 + b] << b for b in range(8))
+            bytes_out.append(byte_val)
+        return bytes_out
 
     received_bytes = decode_uart(received_bits)
     received_chars = [chr(b) for b in received_bytes]
