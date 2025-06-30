@@ -152,7 +152,10 @@ async def test_uart_tx(dut):
                 timestamp = get_sim_time(units="ns")
                 received_bits.append(bit)
                 received_timestamps.append(timestamp)
-                dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+                if counting == 9:
+                    dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+                else:
+                    dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             
 
     # Decode UART frames as before
