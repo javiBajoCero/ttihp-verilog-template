@@ -85,7 +85,7 @@ async def test_uart_tx(dut):
 
     # Reset
     dut.rst_n.value = 0
-    dut.ui_in.value = 0xFF  # All lines high
+    dut.ui_in.value = 0xFF  # All lines high (idle)
     await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
     dut._log.info("Reset released")
@@ -94,35 +94,26 @@ async def test_uart_tx(dut):
     dut.ui_in[0].value = 1
     await ClockCycles(dut.clk, 100)
 
+    # Constants for timing
+    oversample_tick_cycles = 651
+    bits_per_uart_bit = 8
+    bit_duration = oversample_tick_cycles * bits_per_uart_bit
+
     # Send "MARCO" to trigger UART TX response
     for ch in "MARCO":
         bits = uart_encode(ord(ch))
 
-        bit_period = 651 * 8  # Full UART bit period in clock cycles
-
         for bit in bits:
             dut.ui_in[0].value = bit
-            # Wait a bit before the middle of the bit period
-            await ClockCycles(dut.clk, bit_period // 2)
-            # Wait for the rising edge of baud_tick_rx (oversample tick)
-            await RisingEdge(dut.clk)
-            while not dut.uo_out.value[1]:  # wait for baud_tick_rx
-                await RisingEdge(dut.clk)
+            await ClockCycles(dut.clk, bit_duration)
 
-        # After sending each character, hold idle for full frame + margin to allow receiver processing
+        # Hold line idle for stop bit and inter-byte delay (2 bit times)
         dut.ui_in[0].value = 1
-        await ClockCycles(dut.clk, 651 * 12)
+        await ClockCycles(dut.clk, bit_duration * 2)
 
         dut._log.info(f"Sent char: {ch}")
-        # Log reception status
-        dut._log.info(f"byte_received: {int(dut.rx_valid.value)}")
-        dut._log.info(f"data: {int(dut.rx_data.value)}")
 
-    # Return line to idle and wait longer for stop bit + idle
-    dut.ui_in[0].value = 1
-    await ClockCycles(dut.clk, 651 * 12)
-
-    # Wait until TX trigger is detected (uo_out[3])
+    # Wait for trigger_send signal (uo_out[3])
     dut._log.info("Sent all bytes, checking for trigger and RX activity")
     for _ in range(10000):
         await RisingEdge(dut.clk)
@@ -132,7 +123,7 @@ async def test_uart_tx(dut):
     else:
         assert False, "Trigger match never happened"
 
-    # Wait for TX to start (uo_out[4] = tx_busy)
+    # Wait for TX start (uo_out[4] = tx_busy)
     for _ in range(10000):
         await RisingEdge(dut.clk)
         if dut.uo_out.value[4]:  # tx_busy
@@ -141,16 +132,16 @@ async def test_uart_tx(dut):
     else:
         assert False, "TX never started (tx_busy never went high)"
 
-    # Capture TX while tx_busy is high
+    # Capture TX while busy
     received_bits = []
     while dut.uo_out.value[4]:  # while tx_busy
         await RisingEdge(dut.clk)
         if dut.uo_out.value[1]:  # baud_tick_tx
             tx_bit = int(dut.uo_out.value[0])
             received_bits.append(tx_bit)
-            dut._log.info(f"TX Bit {len(received_bits)-1}: {tx_bit}")
+            dut._log.info(f"TX Bit {len(received_bits) - 1}: {tx_bit}")
 
-    # Decode UART frames
+    # Decode UART frames from bits
     def decode_uart(bits):
         return [
             sum(bits[i + 1 + b] << b for b in range(8))
@@ -161,7 +152,8 @@ async def test_uart_tx(dut):
     received_chars = [chr(b) for b in received_bytes]
     dut._log.info(f"Received bytes: {received_chars}")
 
-    # Expected response from TX
+    # Expected output
     expected_bytes = [ord(c) for c in "\n\rPOLO!\n\r"]
     assert received_bytes == expected_bytes, f"Expected {expected_bytes}, got {received_bytes}"
+
 
