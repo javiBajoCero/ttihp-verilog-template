@@ -144,7 +144,7 @@ async def test_uart_tx(dut):
     while bit4:  # while tx_busy
         bit4 = (dut.uo_out.value.integer >> 4) & 1
         await RisingEdge(dut.clk)
-        bit1 = (dut.uo_out.value.integer >> 1) & 1
+        bit1 = (dut.uo_out.value.integer >> 2) & 1
         if bit1:  # baud_tick_tx
             bit0 = (dut.uo_out.value.integer >> 0) & 1
             tx_bit = int(bit0)
