@@ -32,11 +32,12 @@ module tt_um_javibajocero_top (
     wire [7:0] rx_data;
     wire       rx_valid;
 
+
     uart_rx uart_rx_inst (
         .clk(clk),
         .rst_n(rst_n),
         .baud_tick(baud_tick_rx),
-        .rx(uio_in[0]),     // RX from pin
+        .rx(ui_in[0]),
         .data(rx_data),
         .byte_received(rx_valid)
     );
