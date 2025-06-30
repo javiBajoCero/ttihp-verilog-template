@@ -138,29 +138,26 @@ async def test_uart_tx(dut):
         cycles_waited += 1
     else:
         assert False, "TX never started (tx_busy never went high)"
-
-    # Wait for first falling edge on tx line (start bit)
-    await RisingEdge(dut.clk)
-    while ((dut.uo_out.value.integer >> 0) & 1) == 1:
-        await RisingEdge(dut.clk)
+        
 
     # Now capture bits on baud_tick_tx edges
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
     received_bits = []
     received_timestamps = []
-    old_flank=1;
+    IDLE_LINE=1;
     timestamp=0;
-    while len(received_bits) < expected_bits and timestamp<20000000:
+    
+    while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         old_flank=1;
-        if ((dut.uo_out.value.integer >> 0) & 1 ) != old_flank:  # detect every initial flank
+        if ((dut.uo_out.value.integer >> 0) & 1 ) != IDLE_LINE:  # detect every initial flank
             bit = (dut.uo_out.value.integer >> 0) & 1
-            old_flank=bit;
             received_bits.append(bit)
             timestamp = get_sim_time(units="ns")
             received_timestamps.append(timestamp)
-            await ClockCycles(dut.clk, 100)
-            for counting in range(8+1):
+            
+            await ClockCycles(dut.clk, 100)         #tiny weeny offset to get away from the flank
+            for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
                 await ClockCycles(dut.clk, 5208)
                 bit = (dut.uo_out.value.integer >> 0) & 1
                 timestamp = get_sim_time(units="ns")
