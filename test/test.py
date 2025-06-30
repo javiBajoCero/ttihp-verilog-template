@@ -152,7 +152,7 @@ async def test_uart_tx(dut):
                 timestamp = get_sim_time(units="ns")
                 received_bits.append(bit)
                 received_timestamps.append(timestamp)
-                if counting == 9:
+                if counting == 8:
                     dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
                 else:
                     dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
