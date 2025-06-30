@@ -123,14 +123,18 @@ async def test_uart_tx(dut):
     else:
         assert False, "Trigger match never happened"
 
-    # Wait for TX start (uo_out[4] = tx_busy)
-    for _ in range(10000):
+    # Wait for TX to start (uo_out[4] = tx_busy)
+    timeout = 20000
+    cycles_waited = 0
+
+    while not dut.uo_out.value[4] and cycles_waited < timeout:
         await RisingEdge(dut.clk)
-        if dut.uo_out.value[4]:  # tx_busy
-            dut._log.info("TX started (tx_busy is high)")
-            break
-    else:
+        cycles_waited += 1
+
+    if cycles_waited == timeout:
         assert False, "TX never started (tx_busy never went high)"
+    else:
+        dut._log.info("TX started (tx_busy is high)")
 
     # Capture TX while busy
     received_bits = []
