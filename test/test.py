@@ -146,8 +146,9 @@ async def test_uart_tx(dut):
 
     # Now capture bits on baud_tick_tx edges
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
+    received_bits = []
     received_timestamps = []
-
+    
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         if (dut.uo_out.value.integer >> 2) & 1:  # baud_tick_tx
