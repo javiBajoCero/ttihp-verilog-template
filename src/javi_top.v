@@ -75,15 +75,12 @@ module tt_um_javibajocero_top (
     assign uo_out[6] = 1'b1;
     assign uo_out[7] = 1'b1;
 
-    // --- UART TX routing to IO pin ---
-    assign uio_out[0] = tx_serial;
-    assign uio_oe[0]  = 1'b1;
-
-    // --- All other IOs unused ---
-    assign uio_out[7:1] = 7'b0;
-    assign uio_oe[7:1]  = 7'b0;
+    // --- All IOs unused ---
+    assign uio_out    = 8'b0;
+    assign uio_oe     = 8'b0;
 
     // Unused signal suppression
     wire _unused = ena | &ui_in;
+
 
 endmodule
