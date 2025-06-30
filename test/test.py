@@ -98,9 +98,13 @@ async def test_uart_tx(dut):
     for ch in "MARCO":
         bits = uart_encode(ord(ch))
 
+        bit_period = 651 * 8  # Full UART bit period in clock cycles
+
         for bit in bits:
             dut.ui_in[0].value = bit
-            await ClockCycles(dut.clk, 651 * 8 // 2)  # half bit time
+            # Wait a bit before the middle of the bit period
+            await ClockCycles(dut.clk, bit_period // 2)
+            # Wait for the rising edge of baud_tick_rx (oversample tick)
             await RisingEdge(dut.clk)
             while not dut.uo_out.value[1]:  # wait for baud_tick_rx
                 await RisingEdge(dut.clk)
