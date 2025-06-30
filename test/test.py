@@ -98,7 +98,8 @@ async def test_uart_tx(dut):
 
     # Constants for timing
     oversample_tick_cycles = 651
-    bit_duration = oversample_tick_cycles 
+    bits_per_uart_bit = 8
+    bit_duration = oversample_tick_cycles * bits_per_uart_bit
 
     # Send "MARCO" to trigger UART TX response
     for ch in "MARCO":
