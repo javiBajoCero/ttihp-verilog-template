@@ -108,6 +108,11 @@ async def test_uart_tx(dut):
             await RisingEdge(dut.clk)
             while not dut.uo_out.value[1]:
                 await RisingEdge(dut.clk)
+        # After sending each character
+        await ClockCycles(dut.clk, 651 * 12)  # full frame + margin
+        dut._log.info(f"Sent char: {ch}")
+        dut._log.info(f"byte_received: {int(dut.rx_valid.value)}")
+        dut._log.info(f"data: {int(dut.rx_data.value)}")
 
     # Return line to idle and wait longer for stop bit + idle
     dut.ui_in[0].value = 1
