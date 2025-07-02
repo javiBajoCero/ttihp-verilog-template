@@ -124,7 +124,6 @@ async def test_uart_tx(dut):
         if dut.uo_out.value[3]:  # trigger_send
             timestamp = get_sim_time(units="ns")
             dut._log.info(f"TRIGGER MATCHED {timestamp} ns! TX should start soon.")
-            await ClockCycles(dut.clk, 3894 )# This is dirty and meant for the tests to
             break
     else:
         assert False, "Trigger match never happened"
@@ -145,7 +144,7 @@ async def test_uart_tx(dut):
             received_bits.append(bit)
             tstart_byte_timestamp = get_sim_time(units="ns")
             received_timestamps.append(tstart_byte_timestamp)
-            dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+            dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {tstart_byte_timestamp} ns")
             await ClockCycles(dut.clk, 5)         #sampling a bit
             
             for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
