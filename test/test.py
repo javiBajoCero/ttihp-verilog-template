@@ -128,7 +128,7 @@ async def test_uart_tx(dut):
     else:
         assert False, "Trigger match never happened"
 
-    await ClockCycles(dut.clk, 3894 )# This is dirty and meant for the tests to pass
+    await ClockCycles(dut.clk, 3894 )# This is dirty and meant for the tests to
 
     # Now capture bits on baud_tick_tx edges
     expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
@@ -136,13 +136,11 @@ async def test_uart_tx(dut):
     received_timestamps = []
     IDLE_LINE=1;
     tstart_byte_timestamp=0;
-    prev_bit = 1  # UART idle is high
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
+        old_flank=1;
         bit = (dut.uo_out.value.integer >> 0) & 1
-        if prev_bit == 1 and bit == 0:  # falling edge detected (start bit)
-                # ... your sampling code here ...
-            prev_bit = bit  # update prev_bit for next iteration
+        if bit != IDLE_LINE:  # detect every initial flank
             received_bits.append(bit)
             tstart_byte_timestamp = get_sim_time(units="ns")
             received_timestamps.append(tstart_byte_timestamp)
