@@ -162,7 +162,7 @@ async def test_uart_tx(dut):
             else:
                 skip_first_bit=False;
                 dut._log.warning("Skipped first UART bit (intentional)")
-                await ClockCycles(dut.clk, 5208/2)
+                await ClockCycles(dut.clk, 2000)
 
     # Decode UART frames as before
     def decode_uart(bits):
