@@ -92,6 +92,13 @@ module uart_rx (
                         end else
                             baud_ctr <= baud_ctr + 1;
                     end
+                    default: begin
+                        // fallback to safe state
+                        state <= IDLE;
+                        baud_ctr <= 0;
+                        bit_index <= 0;
+                        rx_shift <= 0;
+                    end
                 endcase
             end
         end
