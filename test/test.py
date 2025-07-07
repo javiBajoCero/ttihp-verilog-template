@@ -138,13 +138,13 @@ async def test_uart_tx(dut):
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         flank = (int(dut.uo_out.value)>>2) & 1 #baud_tick_tx
-            if flank == 1:  # detected flank
-                dut._log.info(f"detected flank of baud_tick_tx.")
-                await ClockCycles(dut.clk, 1000)
-                bit = (dut.uo_out.value.integer >> 0) & 1
-                timestamp = get_sim_time(units="ns")
-                received_bits.append(bit)
-                received_timestamps.append(timestamp)
+        if flank == 1:  # detected flank
+            dut._log.info(f"detected flank of baud_tick_tx.")
+            await ClockCycles(dut.clk, 1000)
+            bit = (dut.uo_out.value.integer >> 0) & 1
+            timestamp = get_sim_time(units="ns")
+            received_bits.append(bit)
+            received_timestamps.append(timestamp)
 
     # Decode UART frames 
     def decode_uart(bits):
