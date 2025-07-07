@@ -86,7 +86,7 @@ async def test_uart_tx(dut):
     """Send 'MARCO' to RX and check if '\\n\\rPOLO!\\n\\r' is transmitted"""
 
     cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50 MHz
-
+    await ClockCycles(dut.clk, 1000) #just wait for some time
     # Reset
     dut.rst_n.value = 0
     dut.ui_in.value = 0xFF  # All lines high (idle)
