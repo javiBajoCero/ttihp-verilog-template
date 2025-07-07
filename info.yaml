@@ -3,9 +3,9 @@ project:
   title:        "MarcoPolo"      # Project title
   author:       "Javier Munoz Saez"      # Your name
   discord:      "javiernicola"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "when this UART receives MARCO answers POLO"      # One line description of what your project does
+  description:  "when this UART receives 'MARCO' answers '\n\rPOLO!\n\r'"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     50000000       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
@@ -37,16 +37,16 @@ pinout:
 
   # Outputs
   uo[0]: "uartTX"
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[1]: "baud_tick_rx"
+  uo[2]: "baud_tick_tx"
+  uo[3]: "trigger_send"
+  uo[4]: "uartTxbusy"
+  uo[5]: "1"
+  uo[6]: "1"
+  uo[7]: "1"
 
   # Bidirectional pins
-  uio[0]: ""
+  uio[0]: "unused"
   uio[1]: ""
   uio[2]: ""
   uio[3]: ""
