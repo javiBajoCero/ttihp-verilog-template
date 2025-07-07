@@ -136,28 +136,32 @@ async def test_uart_tx(dut):
     received_timestamps = []
     IDLE_LINE=1;
     tstart_byte_timestamp=0;
+    skipe_first_bit=0;
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         bit = int(dut.uo_out.value) & 1
         if bit != IDLE_LINE:  # detect every initial flank
-            received_bits.append(bit)
-            tstart_byte_timestamp = get_sim_time(units="ns")
-            received_timestamps.append(tstart_byte_timestamp)
-            dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {tstart_byte_timestamp} ns")
-            await ClockCycles(dut.clk, 5)         #sampling a bit
-            
-            for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
-                await ClockCycles(dut.clk, 5208)
-                bit = (dut.uo_out.value.integer >> 0) & 1
-                timestamp = get_sim_time(units="ns")
+            if skipe_first_bit==1:
                 received_bits.append(bit)
-                received_timestamps.append(timestamp)
-                if counting == 8:
-                    dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-                    dut._log.info(f"Length pf byte {timestamp-tstart_byte_timestamp} ns")
-                else:
-                    dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-            
+                tstart_byte_timestamp = get_sim_time(units="ns")
+                received_timestamps.append(tstart_byte_timestamp)
+                dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {tstart_byte_timestamp} ns")
+                await ClockCycles(dut.clk, 5)         #sampling a bit
+                
+                for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
+                    await ClockCycles(dut.clk, 5208)
+                    bit = (dut.uo_out.value.integer >> 0) & 1
+                    timestamp = get_sim_time(units="ns")
+                    received_bits.append(bit)
+                    received_timestamps.append(timestamp)
+                    if counting == 8:
+                        dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+                        dut._log.info(f"Length pf byte {timestamp-tstart_byte_timestamp} ns")
+                    else:
+                        dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+            else:
+                skipe_first_bit=1;
+                received_bits.pop()
 
     # Decode UART frames as before
     def decode_uart(bits):
