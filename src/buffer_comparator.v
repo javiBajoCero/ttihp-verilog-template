@@ -19,10 +19,6 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
-`timescale 1ns / 1ps
-`default_nettype none
-
 module buffer_comparator (
     input  wire        clk,
     input  wire        rst_n,

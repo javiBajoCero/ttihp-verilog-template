@@ -80,7 +80,7 @@ module tt_um_javibajocero_top (
     assign uio_oe     = 8'b0;
 
     // Unused signal suppression
-    wire _unused = ena | &ui_in;
+    wire _unused = ena | &uio_in;
 
 
 endmodule
