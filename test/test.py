@@ -86,7 +86,7 @@ async def test_uart_tx(dut):
     """Send 'MARCO' to RX and check if '\\n\\rPOLO!\\n\\r' is transmitted"""
 
     cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())  # 50 MHz
-    await ClockCycles(dut.clk, 1000) #just wait for some time
+
     # Reset
     dut.rst_n.value = 0
     dut.ui_in.value = 0xFF  # All lines high (idle)
@@ -138,7 +138,7 @@ async def test_uart_tx(dut):
     tstart_byte_timestamp=0;
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
-        bit = (dut.uo_out.value.integer >> 0) & 1
+        bit = int(dut.uo_out.value) & 1
         if bit != IDLE_LINE:  # detect every initial flank
             received_bits.append(bit)
             tstart_byte_timestamp = get_sim_time(units="ns")
