@@ -139,10 +139,10 @@ async def test_uart_tx(dut):
         await RisingEdge(dut.clk)
         flank = (int(dut.uo_out.value)>>2) & 1 #baud_tick_tx
         if flank == 1:  # detected flank
-            dut._log.info(f"detected flank of baud_tick_tx.")
-            await ClockCycles(dut.clk, 1000)
+            await ClockCycles(dut.clk, 200)
             bit = (dut.uo_out.value.integer >> 0) & 1
             timestamp = get_sim_time(units="ns")
+            dut._log.info(f"detected flank of baud_tick_tx.+1000clk {timestamp} ns! bit={bit}")
             received_bits.append(bit)
             received_timestamps.append(timestamp)
 
