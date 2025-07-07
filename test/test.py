@@ -136,12 +136,12 @@ async def test_uart_tx(dut):
     received_timestamps = []
     IDLE_LINE=1;
     tstart_byte_timestamp=0;
-    skipe_first_bit=0;
+    skip_first_bit=True;
     while len(received_bits) < expected_bits:
         await RisingEdge(dut.clk)
         bit = int(dut.uo_out.value) & 1
         if bit != IDLE_LINE:  # detect every initial flank
-            if skipe_first_bit==1:
+            if skip_first_bit == False:
                 received_bits.append(bit)
                 tstart_byte_timestamp = get_sim_time(units="ns")
                 received_timestamps.append(tstart_byte_timestamp)
@@ -160,7 +160,8 @@ async def test_uart_tx(dut):
                     else:
                         dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             else:
-                skipe_first_bit=1;
+                skip_first_bit=False;
+                dut._log.warning("Skipped first UART frame (intentional)")
 
     # Decode UART frames as before
     def decode_uart(bits):
