@@ -81,6 +81,7 @@ module tt_um_javibajocero_top (
 
     // Unused signal suppression
     wire _unused = ena | &uio_in;
+    wire _unused = &ui_in[7:1];
 
 
 endmodule
