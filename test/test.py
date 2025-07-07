@@ -161,7 +161,6 @@ async def test_uart_tx(dut):
                         dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
             else:
                 skipe_first_bit=1;
-                received_bits.pop()
 
     # Decode UART frames as before
     def decode_uart(bits):
