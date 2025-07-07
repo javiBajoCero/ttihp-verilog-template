@@ -81,6 +81,44 @@ def uart_encode(byte):
     return [0] + [(byte >> i) & 1 for i in range(8)] + [1]
 
 
+async def uart_rx_monitor(dut, expected_bits, bit_period_clk):
+    """Coroutine to receive UART bits in real time"""
+    received_bits = []
+    received_timestamps = []
+    IDLE_LINE = 1
+    skip_first_bit = True
+
+    while len(received_bits) < expected_bits:
+        await RisingEdge(dut.clk)
+        bit = int(dut.uo_out.value) & 1
+        if bit != IDLE_LINE:  # Start bit detected
+            if skip_first_bit:
+                skip_first_bit = False
+                dut._log.warning("Skipped first UART start bit (intentional)")
+                await ClockCycles(dut.clk, 2000)
+                continue
+
+            tstart = get_sim_time(units="ns")
+            received_bits.append(bit)
+            received_timestamps.append(tstart)
+            dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {tstart} ns")
+            await ClockCycles(dut.clk, 5)
+
+            for i in range(8 + 1):  # 8 data + 1 stop
+                await ClockCycles(dut.clk, bit_period_clk)
+                bit = int(dut.uo_out.value) & 1
+                timestamp = get_sim_time(units="ns")
+                received_bits.append(bit)
+                received_timestamps.append(timestamp)
+                if i == 8:
+                    dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+                    dut._log.info(f"Length of byte: {timestamp - tstart} ns")
+                else:
+                    dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
+
+    return received_bits
+
+
 @cocotb.test()
 async def test_uart_tx(dut):
     """Send 'MARCO' to RX and check if '\\n\\rPOLO!\\n\\r' is transmitted"""
@@ -101,12 +139,15 @@ async def test_uart_tx(dut):
     # Constants for timing
     oversample_tick_cycles = 651
     bits_per_uart_bit = 8
-    bit_duration = oversample_tick_cycles * bits_per_uart_bit
+    bit_duration = oversample_tick_cycles * bits_per_uart_bit  # 5208 cycles
+
+    # Start UART RX monitor before TX starts
+    expected_bits = 9 * 10  # 9 bytes: 10 bits each (start+8data+stop)
+    rx_task = cocotb.start_soon(uart_rx_monitor(dut, expected_bits, bit_duration))
 
     # Send "MARCO" to trigger UART TX response
     for ch in "MARCO":
         bits = uart_encode(ord(ch))
-
         for bit in bits:
             dut.ui_in[0].value = bit
             await ClockCycles(dut.clk, bit_duration)
@@ -125,44 +166,13 @@ async def test_uart_tx(dut):
             timestamp = get_sim_time(units="ns")
             dut._log.info(f"TRIGGER MATCHED {timestamp} ns! TX should start soon.")
             break
+    else:
+        assert False, "Trigger match never happened"
 
-    
+    # Wait for RX monitor to finish
+    received_bits = await rx_task
 
-    # Now capture bits on baud_tick_tx edges
-    expected_bits = 9 * 10  # 9 bytes, 10 bits each (start+8data+stop)
-    received_bits = []
-    received_timestamps = []
-    IDLE_LINE=1;
-    tstart_byte_timestamp=0;
-    skip_first_bit=True;
-    while len(received_bits) < expected_bits:
-        await RisingEdge(dut.clk)
-        bit = int(dut.uo_out.value) & 1
-        if bit != IDLE_LINE:  # detect every initial flank
-            if skip_first_bit == False:
-                received_bits.append(bit)
-                tstart_byte_timestamp = get_sim_time(units="ns")
-                received_timestamps.append(tstart_byte_timestamp)
-                dut._log.info(f"Start Bit {len(received_bits) - 1}: {bit} at {tstart_byte_timestamp} ns")
-                await ClockCycles(dut.clk, 5)         #sampling a bit
-                
-                for counting in range(8+1):             #after that just expect 9600 bauds and sample the whole byte
-                    await ClockCycles(dut.clk, 5208)
-                    bit = (dut.uo_out.value.integer >> 0) & 1
-                    timestamp = get_sim_time(units="ns")
-                    received_bits.append(bit)
-                    received_timestamps.append(timestamp)
-                    if counting == 8:
-                        dut._log.info(f"End Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-                        dut._log.info(f"Length pf byte {timestamp-tstart_byte_timestamp} ns")
-                    else:
-                        dut._log.info(f"TX Bit {len(received_bits) - 1}: {bit} at {timestamp} ns")
-            else:
-                skip_first_bit=False;
-                dut._log.warning("Skipped first UART bit (intentional)")
-                await ClockCycles(dut.clk, 2000)
-
-    # Decode UART frames as before
+    # Decode UART frames
     def decode_uart(bits):
         bytes_out = []
         for i in range(0, len(bits), 10):
@@ -179,7 +189,6 @@ async def test_uart_tx(dut):
             bytes_out.append(byte_val)
             dut._log.info(f"Frame {i//10}: start={start_bit}, stop={stop_bit}")
         return bytes_out
-
 
     received_bytes = decode_uart(received_bits)
     received_chars = [chr(b) for b in received_bytes]
