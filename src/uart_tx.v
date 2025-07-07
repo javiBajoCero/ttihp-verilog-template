@@ -107,6 +107,13 @@ module uart_tx (
                     sending <= 1'b0;
                     state <= IDLE;
                 end
+
+                default: begin
+                    // recover to safe state
+                    state <= IDLE;
+                    sending <= 1'b0;
+                    tx_reg <= 1'b1;
+                end
             endcase
         end
     end
