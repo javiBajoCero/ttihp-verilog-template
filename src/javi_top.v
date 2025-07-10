@@ -73,7 +73,7 @@ module tt_um_javibajocero_top (
     single_addresable_led led_driver (
         .clk(clk),
         .rst_n(rst_n),
-        .trigger(trigger_send),
+        .color_select(trigger_send),
         .color0(color0),
         .color1(color1),
         .led_data_out(uo_out[5])
