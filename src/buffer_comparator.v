@@ -1,29 +1,28 @@
 `timescale 1ns / 1ps
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: DAKKA POWER ELECTRONICS S.L
+// Engineer: Javier MS
 // 
 // Create Date: 06/30/2025 12:24:27 AM
-// Design Name: 
 // Module Name: buffer_comparator
-// Project Name: 
-// Target Devices: 
+// Target Devices: spartan7 fpga and tiny tapeout ASIC
 // Tool Versions: 
-// Description: 
+// Description: when received a new_byte signal, the comparator stores the_byte in a fifo buffer
+//              then checks if the buffer matches the harcoded message 'MARCO', if the buffer is equal to the message it triggers match.
 // 
-// Dependencies: 
+// Dependencies: none
 // 
-// Revision:
 // Revision 0.01 - File Created
-// Additional Comments:
+// Additional Comments: not really
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
 module buffer_comparator (
     input  wire        clk,
     input  wire        rst_n,
-    input  wire        new_byte,     // From uart_rx
-    input  wire [7:0]  the_byte,           // New received UART byte
+    input  wire        new_byte,       // From uart_rx
+    input  wire [7:0]  the_byte,       // New received UART byte
     output reg         match           // Goes high for 1 cycle when "MARCO" is matched
 );
 

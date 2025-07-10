@@ -1,5 +1,22 @@
 `timescale 1ns / 1ps
 `default_nettype none
+//////////////////////////////////////////////////////////////////////////////////
+// Company: DAKKA POWER ELECTRONICS S.L
+// Engineer: Javier MS
+// 
+// Create Date: 06/31/2025 12:20:25 AM
+// Module Name: uart_tx
+// Target Devices: spartan7 fpga and tiny tapeout ASIC
+// Tool Versions: 
+// Description: simple state machine, this is barely a uart, the transmission buffer is hardcoded and the baudrate is controled with baud_tick
+//              when the signal send is received, this module spits out the hardcoded message serialiced to tx.
+//              busy signal is kept high during the whole transmission , in case we need some flow control or debuging purposes
+// Dependencies: none
+// 
+// Revision 0.01 - File Created
+// Additional Comments: not really
+// 
+//////////////////////////////////////////////////////////////////////////////////
 
 module uart_tx (
     input  wire clk,         // system clock

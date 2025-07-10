@@ -1,21 +1,20 @@
 `timescale 1ns / 1ps
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: DAKKA POWER ELECTRONICS S.L
+// Engineer: Javier MS
 // 
 // Create Date: 06/16/2025 02:40:30 PM
-// Design Name: 
 // Module Name: baud_generator
-// Project Name: 
-// Target Devices: 
+// Target Devices: spartan7 fpga and tiny tapeout ASIC
 // Tool Versions: 
-// Description: 
+// Description: BAUD_DIV is jsut a simple prescaler for clk signal
+//              as long as it fits in the counter register it will scale down clk and output to baud_tick
 // 
-// Dependencies: 
+// Dependencies: none
 // 
-// Revision:
 // Revision 0.01 - File Created
-// Additional Comments:
+// Additional Comments: not really
 // 
 //////////////////////////////////////////////////////////////////////////////////
 

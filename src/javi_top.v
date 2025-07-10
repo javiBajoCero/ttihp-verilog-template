@@ -29,8 +29,8 @@ module tt_um_javibajocero_top (
     );
 
     // --- UART RX ---
-    wire [7:0] rx_data;
-    wire       rx_valid;
+    wire [7:0] rx_data; //one byte just received via uart
+    wire       rx_valid;//flag triggering when succesfull byte is received
 
 
     uart_rx uart_rx_inst (

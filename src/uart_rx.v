@@ -1,21 +1,21 @@
 `timescale 1ns / 1ps
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: DAKKA POWER ELECTRONICS S.L
+// Engineer: Javier MS
 // 
 // Create Date: 06/30/2025 12:20:25 AM
-// Design Name: 
 // Module Name: uart_rx
-// Project Name: 
-// Target Devices: 
+// Target Devices: spartan7 fpga and tiny tapeout ASIC
 // Tool Versions: 
-// Description: 
+// Description: simple state machine, uart_rx uses an oversampled 8x baud_tick to detect and deserialice rx signal.
+//              the baudrate is controled with baud_tick, being the actuall serial baudrate baud_tick/8.
+//              if new byte is received it triggers byte_received and paralelices the byte out to data.
 // 
-// Dependencies: 
+// Dependencies: none
 // 
-// Revision:
 // Revision 0.01 - File Created
-// Additional Comments:
+// Additional Comments: not really
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
