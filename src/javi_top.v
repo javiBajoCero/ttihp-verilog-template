@@ -65,13 +65,27 @@ module tt_um_javibajocero_top (
         .busy(uo_out[4])
     );
 
+    // --- ADDRESSABLE LED ---
+    // two colors: green and red (WS2812 uses GRB format)
+    reg [23:0] color0 = 24'h00FF00; // Green (G=FF)
+    reg [23:0] color1 = 24'hFF0000; // Red   (R=FF)
+
+    single_addressable_led led_driver (
+        .clk(clk),
+        .rst_n(rst_n),
+        .trigger(trigger_send),
+        .color0(color0),
+        .color1(color1),
+        .led_data_out(uo_out[5])
+    );
+
+
     // --- Output Connections ---
     assign uo_out[0] = tx_serial;
     assign uo_out[1] = baud_tick_rx;
     assign uo_out[2] = baud_tick_tx;
     assign uo_out[3] = trigger_send;
 
-    assign uo_out[5] = 1'b1;
     assign uo_out[6] = 1'b1;
     assign uo_out[7] = 1'b1;
 

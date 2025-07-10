@@ -22,6 +22,7 @@ project:
     - "uart_tx.v"
     - "uart_rx.v"
     - "buffer_comparator.v"
+    - "single_addresable_led.v"
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
@@ -41,7 +42,7 @@ pinout:
   uo[2]: "baud_tick_tx"
   uo[3]: "trigger_send"
   uo[4]: "uartTxbusy"
-  uo[5]: "1"
+  uo[5]: "led_data_out"
   uo[6]: "1"
   uo[7]: "1"
 
