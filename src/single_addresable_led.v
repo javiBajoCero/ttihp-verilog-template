@@ -21,9 +21,9 @@ module single_addresable_led (
     input  wire clk,
     input  wire rst_n,
     input  wire color_select,   
-    input reg  [23:0] color0,
-    input reg  [23:0] color1,
-    output wire led_data_out
+    input wire  [23:0] color0,
+    input wire  [23:0] color1,
+    output reg led_data_out
 );
 
     // Timing constants (50 MHz clock)
