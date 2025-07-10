@@ -30,8 +30,8 @@ module single_addresable_led (
     localparam T1H         = 40;          // 800 ns
     localparam T0H         = 20;          // 400 ns
     localparam TOTAL       = 62;          // 1.24 us total bit time
-    localparam RESET_TIME  = 2500;        // 50 us reset time
-    localparam COLOR1_TIME = 5_000_000;   // 100 ms (50 MHz clock)
+    localparam RESET_TIME  = 10000;       // 50+150 us reset time
+    localparam COLOR1_TIME = 2_500_000;   // 50 ms (50 MHz clock)
 
     // FSM states
     localparam IDLE  = 0,
