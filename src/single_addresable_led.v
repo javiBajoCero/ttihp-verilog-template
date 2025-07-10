@@ -84,6 +84,7 @@ module single_addresable_led (
                     shift_reg <= use_color1 ? color1 : color0;
                     clk_cnt   <= 0;
                     bit_index <= 0;
+                    led_data_out  <= 0;//trying this, reseting line to 0
                     state     <= LOAD;
                 end
 
