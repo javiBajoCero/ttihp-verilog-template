@@ -66,11 +66,11 @@ module tt_um_javibajocero_top (
     );
 
     // --- ADDRESSABLE LED ---
-    // two colors: green and red (WS2812 uses GRB format)
+    // (WS2812 uses GRB format)
     reg [23:0] color0 = 24'h00FF00; // Green (G=FF)
     reg [23:0] color1 = 24'hFF0000; // Red   (R=FF)
 
-    single_addresable_led led_driver (
+    single_addresable_led led_driver_inst (
         .clk(clk),
         .rst_n(rst_n),
         .color_select(trigger_send),

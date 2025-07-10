@@ -55,12 +55,12 @@ module single_addresable_led (
 
     assign use_color1 = (color1_timer != 0);
 
-    // Color selection logic (on trigger)
+    // Color selection logic (on color_select)
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             color1_timer <= 0;
         end else begin
-            if (trigger)
+            if (color_select)
                 color1_timer <= COLOR1_TIME;
             else if (color1_timer != 0)
                 color1_timer <= color1_timer - 1;
