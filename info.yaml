@@ -13,6 +13,8 @@ project:
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
   top_module:  "tt_um_imtiaz_jtag"
 
+
+
   # List your project's source files here.
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
@@ -53,6 +55,7 @@ pinout:
   uio[5]: ""            # Unused
   uio[6]: ""            # Unused
   uio[7]: ""            # Unused
+
 
 # Do not change!
 yaml_version: 6
