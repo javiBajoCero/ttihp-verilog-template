@@ -86,8 +86,8 @@ module tt_um_javibajocero_top (
     assign uo_out[2] = baud_tick_tx;
     assign uo_out[3] = trigger_send;
 
-    assign uo_out[6] = 1'b1;
-    assign uo_out[7] = 1'b1;
+    assign uo_out[6] = 1'b0;
+    assign uo_out[7] = 1'b0;
 
     // --- All IOs unused ---
     assign uio_out    = 8'b0;
